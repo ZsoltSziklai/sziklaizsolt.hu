@@ -41,14 +41,6 @@ $pe = htmlspecialchars($p);
 </head>
 <body>
   <main class="viewer">
-    <div class="viewer__topbar">
-      <a class="back-link" href="index.html#projects" id="back-link">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M3 8l4-4M3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        avc
-      </a>
-      <button class="theme-toggle" data-theme-toggle aria-label="Theme"></button>
-    </div>
-
     <div class="viewer__kicker">Product Requirements Document</div>
     <h1 class="viewer__title" id="pname">PRD betöltése…</h1>
     <p class="viewer__sub" id="pdesc"></p>
@@ -68,7 +60,6 @@ $pe = htmlspecialchars($p);
   <script src="viewer.js?v=<?= is_file(__DIR__.'/viewer.js') ? filemtime(__DIR__.'/viewer.js') : '1' ?>"></script>
   <script>
     AVCViewer.initTheme();
-    AVCViewer.initBackLink();
     var P = <?= json_encode($p) ?>;
     fetch(P + "/prd.json?v=" + Date.now())
       .then(function (r) { if (!r.ok) throw new Error("PRD nem található"); return r.json(); })

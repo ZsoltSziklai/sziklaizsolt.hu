@@ -294,23 +294,23 @@ function AvProject({ item, labels, lang, index, descAlt }) {
       </div>
 
       <div className="avc-project__actions">
-        <a className="avc-action avc-action--primary" href={item.open} onClick={rememberReturn}>
+        <a className="avc-action avc-action--primary" href={item.open} target="_blank" rel="noopener noreferrer">
           <AvIcon name="open" size={14} />
           <span>{labels.open}</span>
         </a>
-        <a className="avc-action" href={item.source} onClick={rememberReturn}>
+        <a className="avc-action" href={item.source} target="_blank" rel="noopener noreferrer">
           <AvIcon name="zip" size={14} />
           <span>{labels.source}</span>
         </a>
-        <a className="avc-action" href={item.prd} onClick={rememberReturn}>
+        <a className="avc-action" href={item.prd} target="_blank" rel="noopener noreferrer">
           <AvIcon name="doc" size={14} />
           <span>{labels.prd}</span>
         </a>
-        <a className="avc-action" href={item.plan} onClick={rememberReturn}>
+        <a className="avc-action" href={item.plan} target="_blank" rel="noopener noreferrer">
           <AvIcon name="doc" size={14} />
           <span>{labels.plan}</span>
         </a>
-        <a className="avc-action" href={item.tokens} onClick={rememberReturn}>
+        <a className="avc-action" href={item.tokens} target="_blank" rel="noopener noreferrer">
           <AvIcon name="chart" size={14} />
           <span>{labels.tokens}</span>
         </a>

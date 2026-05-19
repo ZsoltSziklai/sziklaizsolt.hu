@@ -34,14 +34,6 @@ $available = is_file($jsonPath);
 </head>
 <body>
   <main class="viewer">
-    <div class="viewer__topbar">
-      <a class="back-link" href="index.html#projects" id="back-link">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M3 8l4-4M3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        avc
-      </a>
-      <button class="theme-toggle" data-theme-toggle aria-label="Theme"></button>
-    </div>
-
     <div class="viewer__kicker">Token-statisztika · AI költségriport</div>
     <h1 class="viewer__title"><?= $projectTitle ?></h1>
     <p class="viewer__sub">Ágens-onkénti token- és költségbontás a <code><?= $pe ?></code> run-hoz.</p>
@@ -62,7 +54,6 @@ $available = is_file($jsonPath);
   <?php if ($available): ?>
   <script>
     AVCViewer.initTheme();
-    AVCViewer.initBackLink();
     var P = <?= json_encode($p) ?>;
     fetch(P + "/token-report.json?v=" + Date.now())
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -119,7 +110,7 @@ $available = is_file($jsonPath);
     }
   </script>
   <?php else: ?>
-  <script>AVCViewer.initTheme(); AVCViewer.initBackLink();</script>
+  <script>AVCViewer.initTheme();</script>
   <?php endif; ?>
   <script>(function(){function t(){if(window.umami){umami.track('token-report-viewer: '+<?= json_encode($p) ?>,{project:<?= json_encode($p) ?>});}else{setTimeout(t,200);}}t();})();</script>
 </body>

@@ -169,14 +169,6 @@ $pe = htmlspecialchars($p);
 </head>
 <body>
   <main class="viewer">
-    <div class="viewer__topbar">
-      <a class="back-link" href="index.html#projects" id="back-link">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M3 8l4-4M3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        avc
-      </a>
-      <button class="theme-toggle" data-theme-toggle aria-label="Theme"></button>
-    </div>
-
     <div class="viewer__kicker">Technikai terv · Programterv</div>
 
     <article class="md">
@@ -187,7 +179,6 @@ $pe = htmlspecialchars($p);
   <script src="viewer.js?v=<?= is_file(__DIR__.'/viewer.js') ? filemtime(__DIR__.'/viewer.js') : '1' ?>"></script>
   <script>
     AVCViewer.initTheme();
-    AVCViewer.initBackLink();
     var h1 = document.querySelector(".md h1");
     if (h1) document.title = h1.textContent + " · AvC";
   </script>
