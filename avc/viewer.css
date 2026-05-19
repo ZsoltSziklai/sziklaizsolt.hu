@@ -71,6 +71,41 @@ button { font: inherit; background: none; color: inherit; border: 0; cursor: poi
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
 /* =========================================================
+   Background field (canvas) — matches main site / AVC
+   ========================================================= */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+}
+:root[data-theme="light"] .bg-canvas { opacity: 0.9; }
+
+.cursor-spot {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    520px circle at var(--cur-x, 50%) var(--cur-y, 30%),
+    var(--accent-dim),
+    transparent 55%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+:root[data-theme="light"] .cursor-spot {
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cursor-spot { display: none; }
+}
+
+/* =========================================================
    Layout
    ========================================================= */
 .viewer {
@@ -78,6 +113,7 @@ button { font: inherit; background: none; color: inherit; border: 0; cursor: poi
   margin: 0 auto;
   padding: clamp(40px, 6vw, 88px) clamp(20px, 5vw, 48px) clamp(64px, 8vw, 120px);
   position: relative;
+  z-index: 1;
 }
 
 .viewer__topbar {

@@ -33,6 +33,9 @@ $available = is_file($jsonPath);
   <script defer src="https://cloud.umami.is/script.js" data-website-id="c087626e-16ed-4ddf-ae66-d6de1ec5a588"></script>
 </head>
 <body>
+  <canvas class="bg-canvas" aria-hidden="true"></canvas>
+  <div class="cursor-spot" aria-hidden="true"></div>
+
   <main class="viewer">
     <div class="viewer__kicker">Token-statisztika · AI költségriport</div>
     <h1 class="viewer__title"><?= $projectTitle ?></h1>
@@ -51,9 +54,12 @@ $available = is_file($jsonPath);
   </main>
 
   <script src="viewer.js?v=<?= is_file(__DIR__.'/viewer.js') ? filemtime(__DIR__.'/viewer.js') : '1' ?>"></script>
+  <script src="bg-effects.js?v=<?= is_file(__DIR__.'/bg-effects.js') ? filemtime(__DIR__.'/bg-effects.js') : '1' ?>"></script>
   <?php if ($available): ?>
   <script>
     AVCViewer.initTheme();
+    AVCFx.initBackgroundField(document.querySelector(".bg-canvas"));
+    AVCFx.initCursorSpot();
     var P = <?= json_encode($p) ?>;
     fetch(P + "/token-report.json?v=" + Date.now())
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -110,7 +116,11 @@ $available = is_file($jsonPath);
     }
   </script>
   <?php else: ?>
-  <script>AVCViewer.initTheme();</script>
+  <script>
+    AVCViewer.initTheme();
+    AVCFx.initBackgroundField(document.querySelector(".bg-canvas"));
+    AVCFx.initCursorSpot();
+  </script>
   <?php endif; ?>
   <script>(function(){function t(){if(window.umami){umami.track('token-report-viewer: '+<?= json_encode($p) ?>,{project:<?= json_encode($p) ?>});}else{setTimeout(t,200);}}t();})();</script>
 </body>

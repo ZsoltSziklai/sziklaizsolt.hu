@@ -168,6 +168,9 @@ $pe = htmlspecialchars($p);
   <script defer src="https://cloud.umami.is/script.js" data-website-id="c087626e-16ed-4ddf-ae66-d6de1ec5a588"></script>
 </head>
 <body>
+  <canvas class="bg-canvas" aria-hidden="true"></canvas>
+  <div class="cursor-spot" aria-hidden="true"></div>
+
   <main class="viewer">
     <div class="viewer__kicker">Technikai terv · Programterv</div>
 
@@ -177,8 +180,11 @@ $pe = htmlspecialchars($p);
   </main>
 
   <script src="viewer.js?v=<?= is_file(__DIR__.'/viewer.js') ? filemtime(__DIR__.'/viewer.js') : '1' ?>"></script>
+  <script src="bg-effects.js?v=<?= is_file(__DIR__.'/bg-effects.js') ? filemtime(__DIR__.'/bg-effects.js') : '1' ?>"></script>
   <script>
     AVCViewer.initTheme();
+    AVCFx.initBackgroundField(document.querySelector(".bg-canvas"));
+    AVCFx.initCursorSpot();
     var h1 = document.querySelector(".md h1");
     if (h1) document.title = h1.textContent + " · AvC";
   </script>
