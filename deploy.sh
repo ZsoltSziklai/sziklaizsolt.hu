@@ -2,79 +2,100 @@
 # =============================================================================
 # deploy.sh — sziklaizsolt.hu deploy
 #
-# Egysoros deploy a Claude CLI website skill-jén keresztül.
-# Nincs interaktív kérdés: a script automatikusan jóváhagyja a műveleteket.
+# Közvetlen rsync SSH-n keresztül. Nem hív Claude CLI-t — determinisztikus.
 #
 # Használat:
-#   ./deploy.sh           # teljes site deploy
-#   ./deploy.sh avc       # csak az /avc/ alkönyvtár deploy-ja
-#   ./deploy.sh dry       # dry-run (rsync --dry-run) — semmit nem ír felül
+#   ./deploy.sh           # teljes site deploy (--delete NÉLKÜL, biztonságos)
+#   ./deploy.sh avc       # csak az /avc/ alkönyvtár (--delete ON, teljes sync)
+#   ./deploy.sh dry       # dry-run (rsync -n) — semmit nem ír felül
+#
+# Webroot: ~/public_html/ (fő domain a cPanel gyökeréből szolgál!)
+# Lásd: memory/deploy_sziklaizsolt_hu.md
 # =============================================================================
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
-# claude CLI elérhetőség
-if ! command -v claude >/dev/null 2>&1; then
-  echo "✗ Hiányzó parancs: claude (Claude Code CLI)"
-  echo "  Telepítés: https://docs.anthropic.com/claude/code"
+SSH_KEY="$HOME/.ssh/id_rsa_sziklaizsolt_hu"
+REMOTE_USER="sziklaiz"
+REMOTE_HOST="sziklaizsolt.hu"
+REMOTE_WEBROOT="~/public_html"
+
+if [[ ! -f "$SSH_KEY" ]]; then
+  echo "✗ SSH kulcs nem található: $SSH_KEY" >&2
   exit 1
 fi
 
 MODE="${1:-full}"
 
+# Közös rsync flag-ek
+RSYNC_BASE=(rsync -avz --human-readable
+  -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new")
+
+# Kihagyandó fájlok / mappák
+EXCLUDES=(
+  --exclude='.git'
+  --exclude='.gitignore'
+  --exclude='.gitattributes'
+  --exclude='.claude'
+  --exclude='.vscode'
+  --exclude='.idea'
+  --exclude='.DS_Store'
+  --exclude='._*'
+  --exclude='deploy.sh'
+  --exclude='node_modules'
+  --exclude='screenshots'
+  --exclude='uploads'
+  --exclude='v1'
+  --exclude='sourcefiles'
+  --exclude='.deploy-backup-*'
+  --exclude='.env'
+  --exclude='.env.*'
+)
+
 case "$MODE" in
   full)
-    TARGET="."
-    SCOPE="teljes site"
-    REMOTE_PATH="webroot"
+    SRC="./"
+    DST="$REMOTE_USER@$REMOTE_HOST:$REMOTE_WEBROOT/"
+    SCOPE="teljes site → $DST (--delete NÉLKÜL)"
+    DELETE_FLAG=()
+    DRY_FLAG=()
     ;;
   avc)
-    TARGET="avc/"
-    SCOPE="/avc/ alkönyvtár"
-    REMOTE_PATH="webroot/avc/"
+    SRC="./avc/"
+    DST="$REMOTE_USER@$REMOTE_HOST:$REMOTE_WEBROOT/avc/"
+    SCOPE="/avc/ alkönyvtár → $DST (--delete ON)"
+    DELETE_FLAG=(--delete)
+    DRY_FLAG=()
     ;;
   dry)
-    TARGET="."
-    SCOPE="teljes site (DRY-RUN)"
-    REMOTE_PATH="webroot"
+    SRC="./"
+    DST="$REMOTE_USER@$REMOTE_HOST:$REMOTE_WEBROOT/"
+    SCOPE="teljes site DRY-RUN → $DST"
+    DELETE_FLAG=()
+    DRY_FLAG=(--dry-run)
     ;;
   *)
-    echo "Ismeretlen mód: $MODE (használat: full | avc | dry)"
+    echo "Ismeretlen mód: $MODE (használat: full | avc | dry)" >&2
     exit 2
     ;;
 esac
 
-echo "→ Deploy: $SCOPE → sziklaizsolt.hu:$REMOTE_PATH"
-echo "→ Forrás: $ROOT/$TARGET"
+echo "→ Deploy: $SCOPE"
+echo "→ Forrás: $ROOT/${SRC#./}"
 echo
 
-# Kihagyandó fájlok / mappák — fejlesztési artefaktok
-EXCLUDES=(
-  ".git"
-  ".gitignore"
-  ".DS_Store"
-  "deploy.sh"
-  "screenshots"
-  "uploads"
-  "v1"
-  "*.md"
-)
-EXCLUDE_ARGS=""
-for e in "${EXCLUDES[@]}"; do
-  EXCLUDE_ARGS+=" --exclude '$e'"
+"${RSYNC_BASE[@]}" \
+  "${EXCLUDES[@]}" \
+  ${DELETE_FLAG[@]+"${DELETE_FLAG[@]}"} \
+  ${DRY_FLAG[@]+"${DRY_FLAG[@]}"} \
+  "$SRC" "$DST"
+
+echo
+echo "→ Verifikáció (cache-busted):"
+TS=$(date +%s)
+for path in "" "styles.css" "app.jsx" "avc/"; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://sziklaizsolt.hu/${path}?v=$TS")
+  echo "  $code  https://sziklaizsolt.hu/${path}"
 done
-
-# A Claude CLI-nek átadott utasítás. A website skill ismeri a kapcsolatot.
-# A --dangerously-skip-permissions flag automatikusan jóváhagyja a fájlmûveleteket.
-PROMPT="A website skill segítségével deployold a '$TARGET' tartalmát a sziklaizsolt.hu $REMOTE_PATH-ba. \
-Használd rsync-et a következő kizárásokkal:$EXCLUDE_ARGS. \
-$([ "$MODE" = "dry" ] && echo "DRY-RUN módban — semmit nem írj felül." || echo "Hajtsd végre a deploy-t.") \
-Ne kérdezz semmit, ne kérj megerősítést. Végén csak a végeredményt jelentsd: hány fájl módosult, hány új, hány törlésre került."
-
-echo "→ Claude utasítás:"
-echo "  $PROMPT"
-echo
-
-claude --dangerously-skip-permissions -p "$PROMPT"
