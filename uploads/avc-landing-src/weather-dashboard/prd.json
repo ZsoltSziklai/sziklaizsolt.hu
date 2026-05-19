@@ -1,0 +1,274 @@
+{
+  "name": "AvC-Test Weather Dashboard",
+  "description": "Időjárás dashboard alkalmazás az Agentic Vibe Coding (AvC) ecosystem validálásához. Vanilla HTML/CSS/JS, egyetlen index.html fájl. Open-Meteo API (ingyenes, kulcs nélküli). Városkeresés, előrejelzés, grafikon, kedvencek, témaváltás.",
+  "branchName": "ralph/avc-test",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Alapstruktúra és város keresés",
+      "description": "As a felhasználó, I want to search for a city by name so that I can see its weather information.",
+      "acceptanceCriteria": [
+        "src/index.html fájl létrehozva, megnyílik böngészőben hiba nélkül",
+        "Keresőmező és 'Keresés' gomb látható az oldal tetején",
+        "Város nevének beírása és Enter/gomb → Open-Meteo Geocoding API hívás (https://geocoding-api.open-meteo.com/v1/search?name=...)",
+        "Ha több találat van → legördülő lista a találatokkal (város, ország)",
+        "Találat kiválasztása → város neve és ország megjelenik fejlécként",
+        "Nem létező város → 'Nincs találat' hibaüzenet",
+        "Üres keresőmező esetén nem indul API hívás",
+        "Keresés közben loading indikátor látható (spinner vagy szöveg)"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Open-Meteo Geocoding API: https://geocoding-api.open-meteo.com/v1/search?name={city}&count=5&language=hu. Nincs API kulcs szükséges.",
+      "dependsOn": [],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-002",
+      "title": "Aktuális időjárás megjelenítés",
+      "description": "As a felhasználó, I want to see the current weather for a selected city so that I know the conditions right now.",
+      "acceptanceCriteria": [
+        "Város kiválasztása után → Open-Meteo Weather API hívás az aktuális időjárásért",
+        "Megjelenik: hőmérséklet (°C), szélsebesség (km/h), széllökés, szélirány",
+        "Megjelenik: páratartalom (%), felhőzet (%)",
+        "Időjárás ikon megjelenik a WMO kód alapján (pl. napos, felhős, esős)",
+        "Időjárás szöveges leírás magyarul (pl. 'Részben felhős', 'Zivataros')",
+        "Utolsó frissítés időpontja látható",
+        "API hiba esetén felhasználóbarát hibaüzenet (nem technikai)"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Open-Meteo API: https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cloud_cover,weather_code. WMO weather codes: 0=tiszta, 1-3=felhős, 45-48=köd, 51-55=szitálás, 61-65=eső, 71-77=hó, 80-82=zápor, 95-99=zivatar.",
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-003",
+      "title": "5 napos előrejelzés",
+      "description": "As a felhasználó, I want to see a 5-day weather forecast so that I can plan ahead.",
+      "acceptanceCriteria": [
+        "Aktuális időjárás alatt → 5 napos előrejelzés kártyák egymás mellett",
+        "Minden nap kártyán: nap neve (pl. 'Hétfő'), dátum, időjárás ikon, min/max hőmérséklet",
+        "Csapadék valószínűség (%) látható minden nap kártyán",
+        "Mai nap kártya vizuálisan megkülönböztethető (keret vagy háttér)",
+        "Mobilon a kártyák horizontálisan görgethetők vagy egymás alá rendeződnek",
+        "Az adatok az Open-Meteo daily forecast API-ból származnak"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Open-Meteo daily params: daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto",
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent",
+      "passed": true,
+      "verified": true
+    },
+    {
+      "id": "US-004",
+      "title": "Kedvenc városok",
+      "description": "As a felhasználó, I want to save favorite cities so that I can quickly check their weather without searching again.",
+      "acceptanceCriteria": [
+        "Csillag (☆/★) ikon a város neve mellett",
+        "Kattintás → város hozzáadása a kedvencekhez, ikon kitöltődik (★)",
+        "Kedvencek lista oldalsávban vagy a keresőmező alatt",
+        "Kedvenc városra kattintás → időjárás betöltése (nincs újabb keresés)",
+        "Kedvenc eltávolítása: kitöltött csillagra kattintás → megerősítő kérdés nélkül eltávolít",
+        "Maximum 8 kedvenc város menthető — felette hibaüzenet",
+        "Kedvencek localStorage-ban tárolódnak (város név, lat, lon, ország)",
+        "Oldal újratöltés után a kedvencek megmaradnak",
+        "Ha van legalább 1 kedvenc, az oldal betöltésekor az első kedvenc időjárása automatikusan betölt"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-005",
+      "title": "Egységváltás (°C/°F, km/h ↔ mph)",
+      "description": "As a felhasználó, I want to switch between metric and imperial units so that I can see weather data in my preferred format.",
+      "acceptanceCriteria": [
+        "Kapcsoló gomb (toggle) a fejlécben: '°C / °F'",
+        "Váltás → minden hőmérséklet és szélsebesség érték azonnal frissül",
+        "°C → °F konverzió: F = C × 9/5 + 32 (kerekítve 1 tizedesre)",
+        "km/h → mph konverzió: mph = km/h × 0.621371 (kerekítve 1 tizedesre)",
+        "Az aktuális egység vizuálisan jelölt (pl. kiemelt háttér a kiválasztott oldalon)",
+        "Egységváltás localStorage-ban megmarad — újratöltés után is az utolsó beállítás aktív",
+        "Az előrejelzés kártyákon is az aktuális egység jelenik meg"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-006",
+      "title": "Hőmérséklet grafikon",
+      "description": "As a felhasználó, I want to see a temperature chart for the next 5 days so that I can visually track temperature trends.",
+      "acceptanceCriteria": [
+        "Az előrejelzés alatt → vonal grafikon (canvas vagy SVG)",
+        "X tengely: napok (5 nap), Y tengely: hőmérséklet",
+        "Két vonal: napi maximum (piros/narancs) és minimum (kék) hőmérséklet",
+        "Tengelyfeliratok olvashatóak: nap neve az X-en, °C/°F érték az Y-on",
+        "Adatpontokra hover → tooltip a pontos értékkel",
+        "A grafikon az egységváltással szinkronban frissül (°C ↔ °F)",
+        "Reszponzív: mobilon is olvasható méretű",
+        "Jelmagyarázat (legend) a grafikon alatt: 'Maximum' és 'Minimum' vonalak"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Tiszta Canvas API vagy SVG megoldás, nincs Chart.js vagy más külső library.",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-007",
+      "title": "Sötét és világos téma",
+      "description": "As a felhasználó, I want to toggle between dark and light themes so that I can use the app comfortably in different lighting conditions.",
+      "acceptanceCriteria": [
+        "Témaváltó gomb a fejlécben (🌙/☀️ ikon)",
+        "Világos téma: fehér háttér, sötét szöveg",
+        "Sötét téma: sötét háttér (#1a1a2e vagy hasonló), világos szöveg",
+        "Témaváltás az összes komponenst érinti: keresőmező, kártyák, grafikon, kedvencek",
+        "Átmenet animált (CSS transition, ~300ms)",
+        "Sötét témában a grafikon vonalai és tengelyei is megfelelő kontrasztúak",
+        "Témabeállítás localStorage-ban tárolva — újratöltés után megmarad",
+        "Alapértelmezett téma: világos"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "CSS custom properties (CSS variables) ajánlott a témaváltáshoz.",
+      "dependsOn": [
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-008",
+      "title": "Óránkénti előrejelzés részletes nézet",
+      "description": "As a felhasználó, I want to see hourly weather details for a specific day so that I can plan my day better.",
+      "acceptanceCriteria": [
+        "Nap kártyára kattintás → részletes óránkénti nézet megjelenik",
+        "24 óra adatai: időpont, hőmérséklet, szélsebesség, csapadék valószínűség, időjárás ikon",
+        "Az adatok táblázatos vagy kártya formátumban megjelenítve",
+        "Vissza gomb → visszalépés az 5 napos áttekintéshez",
+        "Az aktív (kiválasztott) nap vizuálisan jelölt az előrejelzés kártyákon",
+        "Óránkénti adatok az Open-Meteo hourly API-ból",
+        "Mobilon horizontálisan görgethető vagy kompakt kártya elrendezés"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Open-Meteo hourly params: hourly=temperature_2m,wind_speed_10m,precipitation_probability,weather_code&timezone=auto. A 24 óra a kiválasztott napra vonatkozik.",
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent",
+      "passed": true,
+      "verified": true
+    },
+    {
+      "id": "US-009",
+      "title": "Napfelkelte/napnyugta és UV index",
+      "description": "As a felhasználó, I want to see sunrise/sunset times and UV index so that I have a complete picture of the day.",
+      "acceptanceCriteria": [
+        "Napfelkelte és napnyugta időpont megjelenítése (🌅/🌇 ikonokkal)",
+        "Nappali órák száma kiszámolva és kijelezve (pl. '14 óra 23 perc')",
+        "UV index megjelenítése számmal és szöveges kategóriával (0-2: Alacsony, 3-5: Mérsékelt, 6-7: Magas, 8-10: Nagyon magas, 11+: Extrém)",
+        "UV index vizuális jelzés (szín kódolás: zöld → sárga → narancs → piros → lila)",
+        "Napfelkelte/napnyugta vizuális ív vagy progress bar a nappali pozíció jelzésére",
+        "Az adatok az aktuálisan kiválasztott városra vonatkoznak",
+        "Reszponzív elrendezés: mobilon egymás alá rendeződnek"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Open-Meteo daily params kiegészítés: daily=sunrise,sunset,uv_index_max. A nappali progress bar opcionális de szép kiegészítés.",
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-010",
+      "title": "Keresési előzmények és gyorsváltás",
+      "description": "As a felhasználó, I want to see my recent searches and quickly switch between cities so that I can compare weather across locations.",
+      "acceptanceCriteria": [
+        "Keresőmezőre kattintás → legutóbbi keresések megjelennek (legördülő lista)",
+        "Maximum 10 keresési előzmény mentése (FIFO — legrégebbi kiesik)",
+        "Előzmény elemre kattintás → város időjárása betöltődik (nincs újabb API hívás a geocodinghoz)",
+        "Előzmény törölhető egyenként (× gomb)",
+        "Összes előzmény törlése gomb",
+        "Előzmények localStorage-ban tárolódnak",
+        "Duplikátumok kiszűrve: ha ugyanazt a várost keresem, a régi bejegyzés felülíródik (frissül a pozíciója)",
+        "Előzmények és kedvencek vizuálisan megkülönböztethetők (más ikon vagy szekció)",
+        "Oldal újratöltés után az előzmények megmaradnak"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "REGBUG-S07-1",
+      "title": "Regresszió fix: multi-session egységváltás localStorage szivárgás (S07)",
+      "description": "Az egységváltás (°C/°F) a shared localStorage weather-dashboard:units kulcsba ír, ami cross-tab szivárgást okoz: ha egy másik tabban imperial-ra váltottak, reload után az összes tab azt örökli. Fix: sessionStorage használata az egységbeállításhoz, VAGY tab-specifikus localStorage kulcs, HOGY a session-specifikus egységbeállítás ne szivárogjon át más tabokba.",
+      "acceptanceCriteria": [
+        "Ha Session A metric-et állít be és Session B imperial-ra vált, Session A reload után is metric-et mutat",
+        "Az egységváltás a saját session/tab-on belül persiszten marad",
+        "Más tabokba nem szivárog az egységbeállítás"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Regressziós bugfix: S07 szcenárióhoz. Javasolt megoldás: sessionStorage használata a weather-dashboard:units kulcshoz.",
+      "dependsOn": [],
+      "isRegBug": true,
+      "scenarioId": "S07",
+      "createdAt": "2026-04-29T23:34:39.525351+02:00",
+      "completionNotes": "Completed by agent",
+      "type": "bug"
+    },
+    {
+      "id": "REGBUG-S09-1",
+      "title": "Regresszió fix: sun-arc SVG pozíció marker hiányzik (S09)",
+      "description": "A napfelkelte/napnyugta panel sun-arc SVG-jéből hiányzik az aktuális napállást jelző pozíció marker (circle/dot elem). Az SVG csak az ívpályát (sun-arc-track) és az alapvonalat tartalmazza. Fix: add hozzá a napállás jelző circle elemet az SVG-hez, amely az aktuális időpont alapján az ívpályán pozicionálódik.",
+      "acceptanceCriteria": [
+        "A sun-arc SVG tartalmaz egy circle/dot/marker elemet, amely az aktuális napállást jelzi",
+        "A marker pozíciója arányos az aktuális időpont és a napfelkelte/napnyugta közötti eltelt idővel",
+        "Nappali időszakban látható marker, éjszaka (napfelkelte előtt/után) a marker rejtett vagy a pálya végén áll"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Regressziós bugfix: S09 szcenárióhoz. A sun-arc SVG-be kell circle elemet adni a nap aktuális pozíciójának jelzéséhez.",
+      "dependsOn": [],
+      "isRegBug": true,
+      "scenarioId": "S09",
+      "createdAt": "2026-04-29T23:45:07.887721+02:00",
+      "completionNotes": "Completed by agent",
+      "type": "bug"
+    }
+  ],
+  "metadata": {
+    "updatedAt": "2026-04-29T21:47:18.406Z"
+  }
+}

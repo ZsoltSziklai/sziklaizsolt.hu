@@ -1,0 +1,75 @@
+{
+  "agents": {
+    "aiO": {
+      "messages": 158,
+      "output_tokens": 60626,
+      "cache_read_tokens": 8114994,
+      "cache_create_tokens": 159825,
+      "model": "Sonnet 4.6",
+      "cost": 3.94
+    },
+    "aiQAO": {
+      "messages": 82,
+      "output_tokens": 28630,
+      "cache_read_tokens": 5680684,
+      "cache_create_tokens": 290367,
+      "model": "Sonnet 4.6",
+      "cost": 3.22,
+      "note": "becsült (±20%): minichat pro-rata, session JSONL NOT FOUND"
+    },
+    "aiQA-w-01": {
+      "messages": 368,
+      "output_tokens": 122614,
+      "cache_read_tokens": 32300239,
+      "cache_create_tokens": 708424,
+      "model": "Sonnet 4.6",
+      "cost": 14.19,
+      "note": "3 session: US-fázis + REG-1 + REG-2"
+    },
+    "aiQA-w-02": {
+      "messages": 192,
+      "output_tokens": 61821,
+      "cache_read_tokens": 16048170,
+      "cache_create_tokens": 448134,
+      "model": "Sonnet 4.6",
+      "cost": 7.42,
+      "note": "1 session: US-fázis"
+    },
+    "aiqa-planner": {
+      "messages": 250,
+      "output_tokens": 10000,
+      "cache_read_tokens": 75000,
+      "cache_create_tokens": 700000,
+      "model": "Opus 4.7",
+      "cost": 8.00,
+      "note": "becsült (±50%): PLAN cycle + polling; session JSONL NEM archiválódott"
+    },
+    "Ralph": {
+      "messages": 362,
+      "output_tokens": 421668,
+      "cache_read_tokens": 20641781,
+      "cache_create_tokens": 1427657,
+      "model": "Opus 4.7",
+      "cost": 89.36,
+      "note": "11 iteráció (US-001–009, US-010 dead +$19.03, US-010 restart)"
+    }
+  },
+  "pipeline_subtotal": {
+    "messages": 1412,
+    "output": 705359,
+    "cache_read": 82860868,
+    "cache_create": 3734407,
+    "cost": 126.14
+  },
+  "cost_breakdown": {
+    "sonnet_layer_usd": 28.77,
+    "opus_layer_usd": 97.36,
+    "cache_hit_ratio_pct": 96.6
+  },
+  "uncertainty": [
+    "aiQAO becslés: minichat pro-rata (faktor ~0.45), ±20%",
+    "aiqa-planner becslés: $8.00 ha futott, valószínűsítve futott; ±50%",
+    "Ralph US-010 (dead) $19.03 elveszett — silent dead session, benne van a totálban"
+  ],
+  "generated_at": "2026-04-29T19:15:00+02:00"
+}

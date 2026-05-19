@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Programterv — Sziklai Zsolt · AvC</title>
+  <meta name="description" content="Technikai terv — Agentic Vibe Coding projekt." />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="viewer.css" />
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="c087626e-16ed-4ddf-ae66-d6de1ec5a588"></script>
+</head>
+<body>
+  <main class="viewer">
+    <div class="viewer__topbar">
+      <a class="back-link" href="index.html#projects" id="back-link">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M3 8l4-4M3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        avc
+      </a>
+      <button class="theme-toggle" data-theme-toggle aria-label="Theme"></button>
+    </div>
+
+    <div class="viewer__kicker">Technikai terv · Programterv</div>
+
+    <article class="md" id="md-mount">
+      <p>Programterv betöltése…</p>
+    </article>
+  </main>
+
+  <script src="viewer.js"></script>
+  <script>
+    AVCViewer.initTheme();
+    AVCViewer.initBackLink();
+    var p = AVCViewer.getProject();
+    var mount = document.getElementById("md-mount");
+    if (!p) {
+      mount.innerHTML = '<h1>Hiányzó projekt azonosító</h1><p>URL paraméter: ?p=minichat</p>';
+    } else {
+      fetch(p + "/programterv.md")
+        .then(function (r) { if (!r.ok) throw new Error("Programterv nem található"); return r.text(); })
+        .then(function (md) {
+          mount.innerHTML = AVCViewer.mdToHtml(md);
+          // Update doc title from first H1
+          var h1 = mount.querySelector("h1");
+          if (h1) document.title = h1.textContent + " · AvC";
+        })
+        .catch(function (err) {
+          mount.innerHTML = "<h1>Betöltési hiba</h1><p>" + AVCViewer.esc(String(err)) + "</p>";
+        });
+    }
+  </script>
+</body>
+</html>

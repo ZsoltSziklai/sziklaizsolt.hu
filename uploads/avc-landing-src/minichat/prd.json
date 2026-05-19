@@ -1,0 +1,426 @@
+{
+  "name": "MiniChat — Többfelhasználós chat alkalmazás",
+  "description": "Többfelhasználós chat alkalmazás PHP 7.3 + MySQL + vanilla JS. Regisztráció, bejelentkezés, profil, chat szobák, valós idejű üzenetváltás AJAX pollinggal. Több fájlos struktúra: PHP API backend, HTML/CSS/JS frontend. Az AI Vibe-Coding Ecosystem legösszetettebb tesztje.",
+  "branchName": "ralph/advc-test",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Adatbázis séma és API alap",
+      "description": "As a fejlesztő, I want a database schema and base API config so that all other features have a foundation.",
+      "acceptanceCriteria": [
+        "src/api/config.php létrehozva — MySQL connection adatok, hibakezelés, charset UTF-8",
+        "src/api/init_db.php létrehozva — egyszer futtatható séma inicializáló script",
+        "users tábla: id (AUTO_INCREMENT), username (UNIQUE), email (UNIQUE), password_hash, bio, avatar_url, created_at, last_seen",
+        "rooms tábla: id, name (UNIQUE), description, created_by (FK→users), is_private (BOOLEAN), created_at",
+        "messages tábla: id, room_id (FK→rooms), user_id (FK→users), content (TEXT), created_at, INDEX(room_id, created_at)",
+        "room_members tábla: room_id, user_id, joined_at — PRIMARY KEY(room_id, user_id)",
+        "Az init_db.php lefuttatásakor a táblák létrejönnek és egy 'Lobby' nevű alapértelmezett szoba is (is_private=0)",
+        "Az init_db.php HTTP-n meghívva lefut és kiírja az eredményt (siker/hiba), majd másodszorra jelzi hogy a táblák már léteznek",
+        "RESET mód: init_db.php?reset=1&secret=<ADMIN_SECRET> — TRUNCATE messages, room_members; DELETE FROM rooms WHERE name != 'Lobby'; DELETE FROM users; majd AUTO_INCREMENT resetelés. Lobby szoba megmarad (vagy újra seedelődik ha hiányzik). A secret egyezés kötelező — hiányzó/rossz secret → 403 JSON válasz.",
+        "ADMIN_SECRET konstans a config.php-ben (define('ADMIN_SECRET', 'advc-test-reset-2026') — hardcoded, publikus repo-ban is OK mert csak DB reset, nincs hitelesítés megkerülés)",
+        "Sikeres reset → JSON válasz: {success: true, message: 'DB reset: <N> user, <M> room, <K> msg törölve', lobby_id: <id>}"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "A MySQL connection adatokat a website skill-lel le tudod kérdezni a szerverről. PHP 7.3 — PDO ajánlott. FONTOS: password_hash() használata jelszó tárolásnál! Az init_db.php-t aiO fogja egyszer meghívni deploy után, és a regresszió VÉGÉN is (?reset=1) — tabula rasa a manuális teszthez.",
+      "dependsOn": [],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-002",
+      "title": "Regisztráció",
+      "description": "As a látogató, I want to register an account so that I can use the chat.",
+      "acceptanceCriteria": [
+        "src/register.html oldal: felhasználónév, email, jelszó, jelszó megerősítés mezők + 'Regisztráció' gomb",
+        "Kliens oldali validáció: felhasználónév min 3 karakter, email formátum, jelszó min 6 karakter, jelszavak egyeznek",
+        "AJAX POST → src/api/auth.php?action=register — JSON válasz",
+        "Szerver oldali validáció: üres mezők, email formátum, felhasználónév/email egyediség ellenőrzés",
+        "Sikeres regisztráció → password_hash() tárolás, automatikus bejelentkezés (session), átirányítás chat.html-re",
+        "Hiba → hibaüzenet megjelenik a form felett (piros háttér, szöveg)",
+        "Link a login oldalra: 'Már van fiókod? Jelentkezz be!'",
+        "CSRF védelem: rejtett token mező a formban"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "password_hash(PASSWORD_DEFAULT) és password_verify() használata. Session indítás: session_start() + $_SESSION['user_id']. CSRF token: bin2hex(random_bytes(32)).",
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-003",
+      "title": "Bejelentkezés és kijelentkezés",
+      "description": "As a regisztrált felhasználó, I want to log in and out so that I can access my account securely.",
+      "acceptanceCriteria": [
+        "src/index.html (login oldal): email + jelszó mezők + 'Bejelentkezés' gomb",
+        "AJAX POST → src/api/auth.php?action=login — JSON válasz",
+        "Sikeres login → session létrehozás (user_id, username), last_seen frissítés, átirányítás chat.html-re",
+        "Hibás email/jelszó → 'Hibás email vagy jelszó' üzenet (nem árulja el melyik hibás)",
+        "Kijelentkezés gomb a chat.html fejlécben → src/api/auth.php?action=logout → session törlés → átirányítás index.html-re",
+        "Session ellenőrzés: chat.html megnyitásakor ha nincs aktív session → átirányítás index.html-re",
+        "Link a regisztrációs oldalra: 'Nincs még fiókod? Regisztrálj!'",
+        "CSRF védelem minden POST kérésnél"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Session fixation védelem: session_regenerate_id(true) sikeres login után.",
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-004",
+      "title": "Chat felület és Lobby szoba",
+      "description": "As a bejelentkezett felhasználó, I want to see the chat interface with the Lobby room so that I can start chatting.",
+      "acceptanceCriteria": [
+        "src/chat.html: bal oldali sáv (szobák lista), középen üzenetek terület, jobb oldali sáv (online felhasználók)",
+        "Bal sávban a 'Lobby' szoba alapértelmezetten kiválasztva (kiemelt háttér)",
+        "Középen az üzenetek terület: üzenet buborékok, alul üzenetküldő mező + 'Küldés' gomb",
+        "Fejlécben: aktuális szoba neve, felhasználó neve, kijelentkezés gomb",
+        "Reszponzív: mobilon a sávok hamburger menüből nyílnak",
+        "CSS fájl elkülönítve: src/css/style.css — tiszta, modern dizájn",
+        "JavaScript elkülönítve: src/js/chat.js — üzenetkezelés logika",
+        "A chat.html betöltésekor lekéri a Lobby szoba üzeneteit (utolsó 50)"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Layout: CSS Grid vagy Flexbox. Bal sáv ~250px, jobb sáv ~200px, közép rugalmas. Mobilon (max-width: 768px) a sávok eltűnnek és hamburger menüből érhetők el. Mobile viewport-ra lásd US-017 (dvh layout, 2 hamburger, safe-area).",
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-005",
+      "title": "Üzenet küldés és fogadás",
+      "description": "As a felhasználó, I want to send and receive messages in real-time so that I can communicate with others.",
+      "acceptanceCriteria": [
+        "Üzenet beírása az alsó mezőbe + Enter vagy Küldés gomb → AJAX POST → src/api/messages.php?action=send",
+        "Üzenet megjelenik a saját képernyőn azonnal (optimistic UI), jobb oldalra igazítva, kék háttér",
+        "Mások üzenetei bal oldalra igazítva, szürke háttér, felhasználónévvel a buborék felett",
+        "AJAX polling (3 másodpercenként) → src/api/messages.php?action=poll&room_id=X&after=LAST_MSG_ID — csak az új üzenetek",
+        "Üzenet buborék tartalmazza: felhasználónév, üzenet szöveg, időpont (HH:MM formátum)",
+        "Új üzenet érkezésekor az üzenetek terület automatikusan legörget az aljára",
+        "Üres üzenet nem küldhető (gomb disabled + szürke)",
+        "Üzenet maximum 1000 karakter — felette hibaüzenet, karakter számláló látható"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "A polling az utolsó látott message ID-t küldi, a szerver csak az újabbakat adja vissza. Így minimális adatforgalom. Az optimistic UI azt jelenti, hogy a saját üzenetünk azonnal megjelenik küldéskor, nem várjuk meg a szerver válaszát. Mobile input viselkedés (font-size:16px minimum, safe-area padding, keyboard fókusz scroll reset) — lásd US-017.",
+      "dependsOn": [
+        "US-004"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-006",
+      "title": "Chat szobák létrehozása és listázása",
+      "description": "As a felhasználó, I want to create and browse chat rooms so that I can organize conversations by topic.",
+      "acceptanceCriteria": [
+        "'+ Új szoba' gomb a bal sávban a szobák lista felett",
+        "Kattintás → modal/dialog: szoba név (kötelező), leírás (opcionális), privát checkbox",
+        "AJAX POST → src/api/rooms.php?action=create — szoba létrehozás, létrehozó automatikusan tag lesz",
+        "Szobák listája a bal sávban: szoba név, tagok száma badge-ben (pl. '3')",
+        "Publikus szobák mindenki számára láthatók — kattintás → automatikus csatlakozás",
+        "Privát szobák csak meghívottaknak láthatók (room_members alapján). A meghívás mechanizmusa külön US-016-ban van specifikálva.",
+        "Szoba névre kattintás → az adott szoba üzenetei töltődnek be a középső panelbe",
+        "Aktív (kiválasztott) szoba vizuálisan kiemelt a listában"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Szoba név: min 2, max 30 karakter, egyedi. A Lobby szoba nem törölhető és mindenki tagja.",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-007",
+      "title": "Online felhasználók listája",
+      "description": "As a felhasználó, I want to see who is currently online so that I know who I can chat with.",
+      "acceptanceCriteria": [
+        "Jobb oldali sáv: 'Online' fejléc + felhasználók listája",
+        "Online = last_seen az elmúlt 45 MÁSODPERCBEN (az AJAX polling frissíti a last_seen-t)",
+        "Minden felhasználó mellett: avatar (kör, default ha nincs), felhasználónév, zöld pötty",
+        "Offline felhasználók (last_seen > 45 mp) szürke pöttyel, a lista alján",
+        "A lista 15 MÁSODPERCENKÉNT frissül (AJAX GET → src/api/users.php?action=online&room_id=X)",
+        "Csak az aktuális szoba tagjai jelennek meg (a Lobby-ban mindenki)",
+        "Saját felhasználónév megkülönböztetve (félkövér vagy '(Te)' felirat)",
+        "KIJELENTKEZÉS HATÁSA — MAX 15 MP: Logout után (auth.php?action=logout) a user last_seen mezője olyan értékre állítódjon, hogy MAX 15 MP-EN BELÜL offline-nak (szürke pötty, lista alján) jelenjen meg a többi user listájában. Megoldás: logout-kor last_seen = NOW() - INTERVAL 60 SECOND VAGY egy külön is_logged_out TINYINT flag. A jobb oldali online-lista a következő poll-nál (max 15 mp) reflektálja a változást.",
+        "BROWSER ZÁRÁS / TAB BEZÁRÁS — MAX 60 MP: ha a user session nélkül hagyja el az oldalt (window close, tab close, hálózati kapcsolat vesztés) → MAX 60 MP múlva szürke pötty (45 mp last_seen timeout + max 15 mp polling késleltetés). Ez elfogadható a teszt app-nál, production-ban tovább csökkenthető.",
+        "EDGE CASE: ha ugyanaz a user két tabban nyitja meg a chatet, és csak az egyikben jelentkezik ki → explicit logout esetén MAX 15 MP-en belül offline (a másik tab polling-ja frissíti ha még élő session-je van). Session-alapú logic, nem user-id alapú.",
+        "MÉRHETŐSÉGI KÖVETELMÉNY (aiQA regresszióhoz): a tesztben stopperrel mérhetőnek kell lennie — explicit logout → 15 mp alatt szürke pötty = PASS, 15 mp felett = FAIL. Tab close → 60 mp alatt szürke = PASS, felette = FAIL."
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Időzítési konstansok (B szint — teszt app-hoz arányos): last_seen timeout = 45 mp, online-lista polling = 15 mp. A last_seen frissítése a messages.php polling-on keresztül történik (3 mp-ként) — minden poll kérés frissíti a user last_seen-jét. KIJELENTKEZÉS edge case: logout-kor a server-nek explicit jeleznie kell a state váltást (last_seen = NOW() - INTERVAL 60 SECOND vagy is_logged_out flag). Korábbi értékek (REGRESSZIÓ ELŐTT): last_seen 2 perc, polling 30 mp — ezek MÁR NEM érvényesek. A ?action=online endpoint SQL WHERE feltétele is frissítendő: last_seen >= NOW() - INTERVAL 45 SECOND.",
+      "dependsOn": [
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-008",
+      "title": "Felhasználói profil",
+      "description": "As a felhasználó, I want to edit my profile so that others can see my information.",
+      "acceptanceCriteria": [
+        "Fejlécben a felhasználónévre kattintás → src/profile.html oldal megnyílik",
+        "Profil oldal: felhasználónév (nem módosítható, megjelenítés), email, bio (max 200 karakter), avatar URL mező",
+        "AJAX POST → src/api/users.php?action=update_profile — profil frissítés",
+        "Avatar URL beírása → előnézeti kép megjelenik (onerror → default avatar)",
+        "Jelszó módosítás szekció: régi jelszó, új jelszó, új jelszó megerősítés — külön 'Jelszó módosítás' gomb",
+        "Régi jelszó ellenőrzés password_verify()-vel — hibás → hibaüzenet",
+        "Sikeres mentés → 'Profil frissítve!' zöld üzenet",
+        "Vissza gomb → chat.html-re visszalépés"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Bio: szöveges terület, max 200 karakter, karakter számláló. Avatar URL: https:// kell. Default avatar: CSS-ből generált kör a felhasználónév kezdőbetűjével.",
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-009",
+      "title": "Privát üzenet (DM)",
+      "description": "As a felhasználó, I want to send private messages to another user so that we can have a one-on-one conversation.",
+      "acceptanceCriteria": [
+        "Online felhasználó nevére kattintás → 'Privát üzenet' opció (tooltip vagy kontextus menü)",
+        "Privát üzenet indítás → automatikusan létrejön egy privát szoba (ha még nincs) a két felhasználónak",
+        "A privát szoba neve: 'DM: felhasználónév' formátum (mindkét oldalon a másik neve jelenik meg)",
+        "Privát szobák a bal sáv tetején, elkülönítve a publikus szobáktól ('Privát' szekció fejléccel)",
+        "DM szobában csak a két felhasználó üzenetei láthatók",
+        "Új DM üzenet érkezésekor a szoba név mellett értesítés badge (szám)",
+        "A DM szoba nem törölhető, nem hívható meg harmadik személy"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "DM szoba: is_private=1, room_members pontosan 2 rekord. A szoba name mezőben tárolható mindkét user ID: 'dm_3_7' (kisebb ID előre).",
+      "dependsOn": [
+        "US-007"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-010",
+      "title": "Üzenet formázás",
+      "description": "As a felhasználó, I want to format my messages with basic markdown so that I can emphasize text.",
+      "acceptanceCriteria": [
+        "**félkövér** → <strong> (dupla csillag között)",
+        "*dőlt* → <em> (szimpla csillag között)",
+        "`kód` → <code> (backtick között, monospace háttér)",
+        "```kódblokk``` → <pre><code> (triple backtick, háttérszín, monospace)",
+        "A formázás kliens oldalon történik (JavaScript regex), megjelenítéskor",
+        "XSS védelem: a nyers HTML escape-elve van, csak a markdown szintaxis konvertálódik",
+        "Az üzenet beviteli mezőben a nyers szöveg látszik, a buborékban a formázott",
+        "Link-ek automatikusan kattinthatóvá válnak (https://... → <a> target=_blank)"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "FONTOS: Először HTML escape (< > & \" '), utána markdown konverzió. Sorrend kritikus a biztonság miatt! A regex-ek ne legyenek mohók (greedy).",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-011",
+      "title": "Értesítések és olvasatlan üzenetek",
+      "description": "As a felhasználó, I want to see notifications for new messages in other rooms so that I don't miss conversations.",
+      "acceptanceCriteria": [
+        "Ha nem az aktív szobában érkezik üzenet → a szoba neve mellett badge szám jelenik meg",
+        "Badge szám = olvasatlan üzenetek száma az utolsó megtekintés óta",
+        "Szobára váltáskor a badge eltűnik (olvasottnak jelölés)",
+        "Böngésző tab címében megjelenik az összesített olvasatlan szám: '(3) MiniChat'",
+        "Ha a böngésző tab nem aktív (document.hidden) → Notification API értesítés (ha engedélyezve)",
+        "Notification kérés: első üzenetnél kéri az engedélyt (Notification.requestPermission)",
+        "Hang értesítés opcionális: egyszerű beep/ding új üzenetnél (más szobából)"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Az olvasatlan tracking kliens oldalon: JavaScript objektum tartja nyilván szobánként az utolsó látott message ID-t. A polling válaszban lévő új üzenetek alapján számol.",
+      "dependsOn": [
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent",
+      "passed": true,
+      "verified": true
+    },
+    {
+      "id": "US-012",
+      "title": "Üzenet keresés",
+      "description": "As a felhasználó, I want to search messages so that I can find past conversations.",
+      "acceptanceCriteria": [
+        "Keresés ikon a fejlécben → keresőmező kinyílik (slide-down animáció)",
+        "Keresés beírás → AJAX GET → src/api/messages.php?action=search&q=TERM&room_id=X (min 3 karakter)",
+        "Eredmények: üzenet buborékok kiemelve (a keresett szó sárga háttérrel)",
+        "Minden eredménynél: feladó neve, szoba neve, dátum, üzenet részlet",
+        "Eredményre kattintás → az adott szoba nyílik meg, az üzenet pozícióra görget",
+        "Ha nincs találat → 'Nincs találat' üzenet",
+        "Keresés az aktuális szobában történik (nem globális)",
+        "SQL injection védelem: prepared statement használata a keresésben"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "SQL: WHERE content LIKE ? — a keresőszót %term% formátumban keressük. Prepared statement kötelező!",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-013",
+      "title": "Sötét és világos téma",
+      "description": "As a felhasználó, I want to toggle between dark and light themes so that I can use the chat comfortably.",
+      "acceptanceCriteria": [
+        "Témaváltó ikon a fejlécben (🌙/☀️)",
+        "Világos téma: fehér háttér, sötét szöveg, világoskék saját üzenetek",
+        "Sötét téma: #1e1e2e háttér, világos szöveg, sötétkék saját üzenetek",
+        "Témaváltás érinti: chat terület, sávok, input mezők, modálok, profil oldal, login/register oldalak",
+        "CSS variables használata a témához (--bg-primary, --text-primary, stb.)",
+        "Animált átmenet (transition 300ms)",
+        "Téma beállítás localStorage-ban tárolva — minden oldalon érvényes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "CSS custom properties (variables) a :root-ban definiálva. data-theme='dark' attribútum a body-n.",
+      "dependsOn": [
+        "US-004"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-014",
+      "title": "Gépelés jelző (typing indicator)",
+      "description": "As a felhasználó, I want to see when someone is typing so that I know a response is coming.",
+      "acceptanceCriteria": [
+        "Ha a felhasználó gépel az üzenet mezőben → AJAX POST → src/api/messages.php?action=typing&room_id=X",
+        "A polling válasz tartalmazza ki gépel éppen az adott szobában",
+        "Az üzenetek terület alján megjelenik: 'Anna gépel...' vagy 'Anna és Béla gépelnek...' animált pontokkal (...)",
+        "A gépelés jelző 3 másodperc inaktivitás után eltűnik",
+        "A saját gépelés nem jelenik meg",
+        "Maximum 3 név jelenik meg, felette: '3 felhasználó gépel...'",
+        "Az animált pontok CSS-sel megoldva (nem JS timer)"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Szerver oldalon: /tmp/ fájl vagy memória tábla a gépelő felhasználók nyilvántartására. Egyszerűbb: typing_status oszlop a room_members táblában + timestamp. Ha timestamp > 3mp régi, nem gépel.",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-015",
+      "title": "Biztonsági hardening",
+      "description": "As a rendszergazda, I want the application to be secure against common web attacks.",
+      "acceptanceCriteria": [
+        "Minden API endpoint ellenőrzi a session-t — session nélküli kérés → 401 JSON válasz",
+        "SQL injection védelem: MINDEN SQL query prepared statement (nincs string concatenáció query-ben)",
+        "XSS védelem: htmlspecialchars() szerver oldalon output-nál, kliens oldalon escape megjelenítéskor",
+        "CSRF token minden POST kérésnél (register, login, üzenet küldés, profil módosítás)",
+        "Rate limiting: max 30 üzenet/perc felhasználónként — felette 429 Too Many Requests válasz",
+        "Password hashing: password_hash(PASSWORD_DEFAULT) — soha nem plain text",
+        "Session fixation védelem: session_regenerate_id(true) login után",
+        "HTTP-only session cookie (session.cookie_httponly = true)"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "A rate limiting egyszerűen megoldható: messages tábla lekérdezés WHERE user_id=? AND created_at > NOW()-INTERVAL 1 MINUTE, ha COUNT > 30 → elutasítás. Az init_db.php-ben állítsd be a session.cookie_httponly-t.",
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-016",
+      "title": "Privát szoba meghívás",
+      "description": "As a privát szoba létrehozója vagy tagja, I want to invite other users to a private room so that they can join the conversation.",
+      "acceptanceCriteria": [
+        "Aktív privát szobánál (is_private=1 ÉS NEM DM) a szoba fejlécben '+ Meghívás' gomb jelenik meg (DM szobákban NEM — azok csak 2 fős, ott nincs invite)",
+        "Gombra kattintás → modal/dialog: 'Felhasználó meghívása' + keresőmező (autocomplete a felhasználónevek alapján, min 2 karakter) + lista a már tag felhasználókról",
+        "Felhasználó kiválasztása → AJAX POST → src/api/rooms.php?action=invite — body: {room_id, invited_user_id vagy invited_username, csrf_token}",
+        "Szerver oldali ellenőrzés: (a) a meghívó legyen tag a szobában (room_members), (b) a szoba privát legyen és NE DM, (c) a meghívott létezzen és még NE legyen tag → INSERT INTO room_members",
+        "Már tag felhasználó meghívása → JSON hiba: 'A felhasználó már tag a szobában'",
+        "Nem létező felhasználó → 'Nincs ilyen felhasználó' hibaüzenet",
+        "Jogosultság hiba (nem vagyok tag) → 403: 'Nincs jogod meghívni a szobába'",
+        "Sikeres meghívás → a meghívott bal sávján megjelenik a privát szoba a következő rooms/list poll-nál (max 30mp késleltetés elfogadott)",
+        "GET ?action=members&room_id=X — visszaadja a szoba tagjait ({users: [{id, username}]}), a modal ezzel tölti ki a 'már tag' listát",
+        "CSRF védelem: tokent a rooms.php?action=invite is ellenőrzi"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "DM és privát szoba megkülönböztetése: DM-nél a name 'dm_X_Y' mintára illeszkedik VAGY külön oszlopot teszünk fel is_dm (TINYINT). Egyszerűbb: name LIKE 'dm\\_%' ellenőrzés. A publikus szobákba nincs invite — ott bárki join-olhat (US-006). UI: a '+ Meghívás' gomb csak a privát, nem-DM szobákban jelenjen meg.",
+      "dependsOn": [
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "US-017",
+      "title": "Mobil reszponzivitás és iOS Safari kompatibilitás",
+      "description": "As a mobil felhasználó (iOS Safari, Android Chrome), I want the chat UI to work properly on my phone so that I can read messages and type without the input field being hidden or inaccessible.",
+      "acceptanceCriteria": [
+        "Minden HTML oldal fejléce: <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\"> — a viewport-fit=cover a safe-area-inset-*-hez szükséges",
+        "Chat konténer magasság: 100dvh (dynamic viewport height) használata 100vh helyett. iOS Safari-ban a 100vh a legnagyobb viewport-ot jelenti (address bar rejtve) — keyboard fókuszban a content levágódik. A dvh dinamikusan követi a látható viewport-ot",
+        "Chat szerkezet (US-004 kiegészítése): display:flex; flex-direction:column; height:100dvh. A message list flex:1; overflow-y:auto, az üzenetküldő form flex-shrink:0 — így az input MINDIG látható keyboard nyitva is, NEM kell position:fixed",
+        "Üzenetküldő form safe-area: padding-bottom: max(8px, env(safe-area-inset-bottom)) — iPhone home indicator alatt ne vágódjon. Ugyanez a fejlécen padding-top: env(safe-area-inset-top), ha notch van",
+        "Input font-size: MIN 16px — kisebb font-size-nél iOS Safari automatikusan zoom-ol a fókuszra (unwanted UX). Ez a message input-ra, keresőre, login form-ra is vonatkozik",
+        "Input focus scroll reset: iOS Safari billentyűzet megjelenéskor a body scrollTop felfelé csúszhat. A chat.js/login.js/register.js focus eseményében window.scrollTo(0,0) és document.body.scrollTop=0",
+        "visualViewport API: a chat container magasságát a window.visualViewport.height-hez igazítjuk (resize + scroll event listener). Android Chrome-on is működik. Fallback: ha nincs visualViewport (pl. régi böngésző), a 100dvh elég",
+        "Touch target minimum: minden interaktív elem (Küldés gomb, hamburger ikonok, szobaválasztó elemek, profilmenü, modal close X, emoji/formázás gombok) MIN 44x44 CSS px — iOS HIG javaslat. Padding-gel is elérhető, nem kell nagy ikon",
+        "Breakpoint max-width: 768px: bal oldali sáv (szobák) ÉS jobb oldali sáv (online users) el van rejtve. KÉT hamburger ikon a header-ben (bal: szobák, jobb: online/users). Tap → az adott sáv overlay-ként benyílik, tap a másik területre/X → becsukódik",
+        "Overscroll behavior: a message list CSS: overscroll-behavior: contain — ne scrollozza a body-t a lista tetején/alján pull-gesztussal (iOS rubber band, Android pull-to-refresh)",
+        "Landscape orientáció (iPhone 736px+ szélesség): a layout ugyanaz mint portrait — hamburger menük, NEM 3 oszlop, mert a vertikális hely kevés (főleg keyboard esetén)",
+        "Input attribútumok: <input type=\"text\" inputmode=\"text\" autocapitalize=\"sentences\" autocorrect=\"on\" spellcheck=\"true\"> vagy <textarea> ugyanezekkel. A login/regisztráció username mezőjén autocapitalize=\"none\", autocorrect=\"off\"",
+        "Modal/dialog mobile: minden modal (pl. szoba létrehozás, meghívás — US-006, US-016) MIN 90% képernyőszélességű, vertikálisan scrollolható ha nem fér el, bezáró X min 44x44px, a modal bottom safe-area padding-gel",
+        "Lobby és szobakártyák reszponzív: a szobalista kártyái mobilon egymás alatt (100% width), NEM flex-row. A kártyán belüli szövegek ne csorogjanak túl (text-overflow: ellipsis, word-wrap: break-word)",
+        "Regressziós teszt (aiQA Chrome MCP): iPhone 13 viewport (390x844), iPad portrait (768x1024), Android Pixel 7 (412x915) — mindhárom viewport-ban login → chat → üzenet küldés flow működik, az input mező és a Küldés gomb elérhető keyboard fókuszban is. EXPLICIT DOM-VALIDÁCIÓ: (1) küldött üzenet megjelenik az üzenet-terület buborékaként (querySelector('.message-bubble') vagy ekvivalens visszaad nem-null elemet a küldés után 5mp-en belül), (2) header MINDEN gombjára getBoundingClientRect().right <= window.innerWidth (nincs vízszintes overflow/clipping), (3) Küldés gomb NEM display:none és NEM 0-szélességű (offsetWidth > 0), (4) #messages konténer offsetHeight > 0 portrait-ben is",
+        "Header layout overflow védelem (mobile portrait, KRITIKUS — 2026-04-28 user bug report): a header MINDEN gombja (hamburger-bal, hamburger-jobb online users-hez, search, hang, téma, Kijelentkezés) láthatónak és tap-elhetőnek kell lennie 390px-es viewport szélességen — text-overflow:clip vagy szöveg-csonkolás TILOS. Ha kevés a hely 768px alatt: szöveges 'Kijelentkezés' gombot ikonra cserélni (pl. ⏻ vagy 🚪) VAGY másodlagos akciókat (hang, téma) egy 'kebab' (⋮) menübe csoportosítani. AC validáció: getBoundingClientRect().right minden header gombra <= window.innerWidth, ÉS textContent nincs ellipsis-szel csonkolva, ÉS a jobb hamburger ikon (online users sáv-megnyitó) látható (offsetWidth > 0)",
+        "Chat üzenet-terület render portrait-ben (KRITIKUS — 2026-04-28 user bug report): mobile portrait viewport-ban (iPhone 13 390x844) az üzenet-terület (#messages / .message-list konténer) NEM lehet üres/fekete amikor van üzenet az adott szobában. A height számolás (100dvh - header - input) helyesen működjön portrait orientációban — ha a header 2 sorba törik az overflow miatt, a #messages magassága akkor is > 0 maradjon. Konkrét repró: bejelentkezés portrait-ben → Lobby szoba → 'Hi' üzenet küldés → az üzenet buborék láthatóan megjelenjen az üzenet-területen 3mp-en belül (saját optimistic UI azonnal). Tilt: overflow:hidden a parent-on ami a child-ot 0-magassággal renderelteti, vagy color:#ffffff sötét háttéren kontraszt nélkül (min WCAG AA kontraszt szükséges)",
+        "Input row teljes láthatóság (mobile portrait, KRITIKUS — 2026-04-28 user bug report): az alsó üzenetküldő row összes eleme (textarea/input mező, 'Küldés' gomb, '0/1000' karakter számláló) láthatónak és funkcionálisnak kell lennie 390px viewport-on. A Küldés gomb NE wrap-eljen alá (CSS: flex-shrink:0), és NE legyen lemetszve (overflow:hidden TILOS a row-on). Ha a karakter számláló nem fér el inline a Küldés gomb mellett → kerüljön az input mező alá egy kis sorba (display:block, NEM display:none). AC validáció: a row összes közvetlen gyermekére offsetWidth > 0 ÉS getBoundingClientRect().right <= window.innerWidth",
+        "Orientációváltás konzisztencia (KRITIKUS — 2026-04-28 user bug report): ugyanazt a felhasználói flow-t (login → Lobby → üzenet küldés → online lista megnyitás) működnie kell PORTRAIT és LANDSCAPE viewport-ban is. Ha bug fellép csak az egyik orientációban (pl. landscape OK, portrait broken — ahogy 2026-04-28-án jelentett bug-nál), az FAILED. Az aiQA regresszióban Chrome MCP viewport-resize-zal végig kell futtatni az alap flow-t mindkét orientációban (390x844 portrait ÉS 844x390 landscape ugyanazon iPhone 13 esetén)"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "A user bug bejelentés (2026-04-24 iOS Safari): 'nem értem a csetnél az alján lévő mezőt'. Klasszikus iOS Safari bug: a position:fixed bottom input nem elérhető keyboard fókuszban, mert a virtual keyboard a viewport FÖLÉ tolódik (NEM alája, mint Android-on vagy desktop-on). A megoldás háromrétegű: (1) 100dvh dynamic viewport height a layout magasságára, (2) flex layout (NEM position:fixed) — a flex-shrink:0 input-mező mindig az flex-végén marad, (3) visualViewport API a finomhangoláshoz. A font-size: 16px minimum az input-okon szintén kritikus, különben iOS auto-zoom a fókuszra. Tesztelendő: iPhone 13 Safari, iPad Safari, Android Pixel 7 Chrome — az aiQA Chrome MCP-vel viewport-ot állít. 2026-04-28 USER BUG REPORT (iOS Safari portrait, sziklaizsolt.hu/advc-test/ MiniChat Lobby): chat üzenet-terület üres/fekete portrait módban (a 'Hi' üzenet nem látszott), 'Kijelentkezés' gomb levágódott a header-en ('Kijelent...'-ként), a Küldés gomb és a '0/1000' számláló nem fért el az input row-ban — landscape (fekvő) módban viszont ugyanaz a flow tökéletesen működött. Ez egyértelműen mobile portrait specifikus horizontal-overflow + dvh height számolási bug. Az új AC-k (header overflow védelem ikon/kebab fallback-kel, üzenet-terület render assertion portrait-ben, input row teljes láthatóság, orientációváltás konzisztencia) explicit fedik ezeket. Ralph implementációnál figyeljen: (a) flex-shrink:0 a Küldés gombra ÉS a header Kijelentkezés gombra, (b) header gombok ikonosítása vagy kebab-menüsítése 768px alatt, (c) #messages overflow-y:auto + min-height:0 + flex:1 1 0 (NEM csak flex:1, mert flex-children-ben a min-height:auto megakadályozza a shrinkelést), (d) overscroll-behavior:contain a #messages-en. A regresszió mindkét orientációban (portrait+landscape) lefuttatandó.",
+      "dependsOn": [
+        "US-004",
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent",
+      "verified": true
+    },
+    {
+      "id": "BUG-017-1",
+      "type": "bug",
+      "title": ".modal-close gomb touch target mérete 36x36px, minimum 44x44px szükséges",
+      "description": "Az Új szoba és Meghívás modal bezáró X gombja csak 36x36px. iOS HIG és AC13 előírja a minimum 44x44px-t. CSS: .modal-close { width:36px; height:36px; }",
+      "relatedUS": "US-017",
+      "passes": true,
+      "createdAt": "2026-04-28T19:15:59+02:00",
+      "completionNotes": "Completed by agent"
+    }
+  ],
+  "metadata": {
+    "updatedAt": "2026-04-28T17:21:06.123Z"
+  }
+}

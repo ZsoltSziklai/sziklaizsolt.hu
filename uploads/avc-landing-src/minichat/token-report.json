@@ -1,0 +1,86 @@
+{
+  "agents": {
+    "aiO": {
+      "output_tokens": 102000,
+      "cache_create_tokens": 738000,
+      "cache_read_tokens": 20700000,
+      "messages": 273,
+      "model": "Sonnet 4.6",
+      "cost": 10.55
+    },
+    "aiQAO": {
+      "output_tokens": 63000,
+      "cache_create_tokens": 645000,
+      "cache_read_tokens": 12600000,
+      "messages": 181,
+      "model": "Sonnet 4.6",
+      "cost": 7.16
+    },
+    "aiQA-w-01": {
+      "output_tokens": 71000,
+      "cache_create_tokens": 303000,
+      "cache_read_tokens": 13300000,
+      "messages": 156,
+      "model": "Sonnet 4.6",
+      "cost": 6.20
+    },
+    "aiQA-w-02": {
+      "output_tokens": 138000,
+      "cache_create_tokens": 477000,
+      "cache_read_tokens": 21100000,
+      "messages": 261,
+      "model": "Sonnet 4.6",
+      "cost": 10.22
+    },
+    "aiQA-w-03": {
+      "output_tokens": 42000,
+      "cache_create_tokens": 290000,
+      "cache_read_tokens": 13000000,
+      "messages": 172,
+      "model": "Sonnet 4.6",
+      "cost": 5.64
+    },
+    "aiQA-w-04": {
+      "output_tokens": 105000,
+      "cache_create_tokens": 468000,
+      "cache_read_tokens": 21300000,
+      "messages": 303,
+      "model": "Sonnet 4.6",
+      "cost": 9.74
+    },
+    "aiQA-w-05": {
+      "output_tokens": 36000,
+      "cache_create_tokens": 253000,
+      "cache_read_tokens": 10400000,
+      "messages": 149,
+      "model": "Sonnet 4.6",
+      "cost": 4.62
+    },
+    "planner": {
+      "output_tokens": 75000,
+      "cache_create_tokens": 1400000,
+      "cache_read_tokens": 150000,
+      "messages": 500,
+      "model": "Opus 4.7",
+      "cost": 30.00,
+      "note": "approximate"
+    },
+    "Ralph": {
+      "output_tokens": 1133000,
+      "cache_create_tokens": 5600000,
+      "cache_read_tokens": 139500000,
+      "messages": 1204,
+      "model": "Opus 4.7",
+      "cost": 398.49
+    }
+  },
+  "grand_total": {
+    "output": 1770000,
+    "cache_read": 252250000,
+    "cache_create": 10100000,
+    "messages": 3199,
+    "cost": 482.63
+  },
+  "generated_at": "2026-04-29T06:45:00+02:00",
+  "table_format": "agent       msg    out     c_wr    c_rd     model      $\n──────────────────────────────────────────────────────────\naiO         273   102K    738K    20.7M    Sonnet    10.55\naiqao       181    63K    645K    12.6M    Sonnet     7.16\nw-01        156    71K    303K    13.3M    Sonnet     6.20\nw-02        261   138K    477K    21.1M    Sonnet    10.22\nw-03        172    42K    290K    13.0M    Sonnet     5.64\nw-04        303   105K    468K    21.3M    Sonnet     9.74\nw-05        149    36K    253K    10.4M    Sonnet     4.62\nplanner¹   ~500    75K    1.4M     0.15M  Opus 4.7  ~30.00\nralph(20)  1204 1133K     5.6M   139.5M  Opus 4.7  398.49\n──────────────────────────────────────────────────────────\nTOTAL     ~3199 1770K    10.1M  252.25M           ~482.63"
+}
