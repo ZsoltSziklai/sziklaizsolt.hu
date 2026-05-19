@@ -1,0 +1,1730 @@
+/* MiniChat — globális stylesheet
+ * US-004: chat felület + Lobby szoba layout (desktop 3-oszlop + mobil hamburger).
+ * US-017: 100dvh, safe-area, font-size:16px input, 44x44 touch target.
+ * Téma váltás (US-013) később bővíti a CSS változókat.
+ */
+
+/* --------------------------------------------------------------------------
+ * Téma változók — világos default, sötét US-013-ban [data-theme="dark"]-ban.
+ * -------------------------------------------------------------------------- */
+:root {
+    --bg-app:           #f7fafc;
+    --bg-surface:       #ffffff;
+    --bg-sidebar:       #ffffff;
+    --bg-input:         #ffffff;
+    --bg-message-self:  #4f7cff;
+    --bg-message-other: #edf2f7;
+    --bg-active-room:   #e6efff;
+    --bg-hover:         #f7fafc;
+    --bg-backdrop:      rgba(15, 23, 42, 0.45);
+
+    --text-primary:     #1a202c;
+    --text-secondary:   #4a5568;
+    --text-muted:       #718096;
+    --text-on-primary:  #ffffff;
+    --text-message-self: #ffffff;
+    --text-message-other:#1a202c;
+
+    --border-default:   #e2e8f0;
+    --border-input:     #cbd5e0;
+    --border-strong:    #a0aec0;
+
+    --color-primary:    #4f7cff;
+    --color-primary-hover: #3d68e0;
+    --color-danger:     #c53030;
+    --color-online:     #38a169;
+    --color-offline:    #a0aec0;
+
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.10);
+    --shadow-lg: 0 12px 36px rgba(15, 23, 42, 0.18);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+
+    --header-height: 56px;
+    --sidebar-width-left:  260px;
+    --sidebar-width-right: 220px;
+
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-stack);
+    color: var(--text-primary);
+    background: var(--bg-app);
+    /* iOS Safari rubber-band a body-n: a fő scroll region a #messagesList. */
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+}
+
+button {
+    font-family: inherit;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+}
+
+/* --------------------------------------------------------------------------
+ * Auth oldalak (index.html, register.html) felülírnak inline stílusokkal —
+ * a chat-page osztályú body adja a flex layoutot a chat felületnek.
+ * -------------------------------------------------------------------------- */
+body.chat-page {
+    /* US-017: 100dvh dynamic viewport — iOS Safari keyboard-nál nem vágódik az alja. */
+    height: 100vh;        /* régi böngésző fallback */
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+ * Header — szoba neve, user info, logout, hamburger gombok.
+ * -------------------------------------------------------------------------- */
+.chat-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    /* US-017: notch/safe-area top a header padding-ben */
+    padding-top: env(safe-area-inset-top, 0);
+    min-height: var(--header-height);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    box-shadow: var(--shadow-sm);
+    z-index: 30;
+}
+
+.header-room {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;       /* hogy a name ellipsis-elhessen, ne lökjön ki */
+    flex: 1 1 auto;
+}
+
+.header-room-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.header-room-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.header-spacer { flex: 1 1 auto; }
+
+.header-username {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+}
+
+.btn-logout {
+    flex: 0 0 auto;     /* US-017: ne wrap-eljen alá / ne tűnjön el portrait-ben */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    min-height: 44px;   /* US-017: 44x44 touch target */
+    min-width: 44px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-logout:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+.btn-logout:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-logout-icon { font-size: 1.05rem; line-height: 1; }
+.btn-logout-text { line-height: 1; }
+
+.hamburger {
+    display: none;      /* desktopon nem látszik */
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    flex: 0 0 auto;
+}
+.hamburger:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+.hamburger-icon { font-size: 1.25rem; line-height: 1; }
+
+/* --------------------------------------------------------------------------
+ * Hibasáv — ugyanaz a minta mint az auth oldalakon.
+ * -------------------------------------------------------------------------- */
+.error-banner {
+    flex: 0 0 auto;
+    display: none;
+    background: #fed7d7;
+    color: #9b2c2c;
+    border-bottom: 1px solid #fc8181;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+}
+.error-banner.visible { display: block; }
+
+/* --------------------------------------------------------------------------
+ * Chat layout — 3 oszlop (desktop) / 1 oszlop + overlay sidebars (mobile).
+ * A 3 részt CSS Grid-del rendezzük: bal sáv | közép | jobb sáv.
+ * -------------------------------------------------------------------------- */
+.chat-layout {
+    flex: 1 1 auto;
+    min-height: 0;      /* fontos flexben — különben a child overflow-ja kifeszít */
+    display: grid;
+    grid-template-columns: var(--sidebar-width-left) 1fr var(--sidebar-width-right);
+    position: relative;
+}
+
+.sidebar {
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.sidebar-right {
+    border-right: none;
+    border-left: 1px solid var(--border-default);
+}
+
+.sidebar-header {
+    flex: 0 0 auto;
+    padding: 14px 16px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-default);
+}
+
+/* --------------------------------------------------------------------------
+ * Sidebar actions (új szoba gomb a lista felett).
+ * -------------------------------------------------------------------------- */
+.sidebar-actions {
+    flex: 0 0 auto;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.btn-new-room {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-new-room:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn-new-room:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-new-room-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+ * Szobák lista (bal sáv).
+ * -------------------------------------------------------------------------- */
+.rooms-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.room-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    min-height: 44px;   /* US-017: touch target */
+    transition: background 0.12s;
+    border: 1px solid transparent;
+}
+.room-item:hover { background: var(--bg-hover); }
+.room-item.active {
+    background: var(--bg-active-room);
+    border-color: rgba(79, 124, 255, 0.3);
+    font-weight: 600;
+}
+.room-item-name {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.room-item-badge {
+    flex: 0 0 auto;
+    background: var(--border-default);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 22px;
+    text-align: center;
+}
+.room-item.active .room-item-badge {
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+}
+.room-item-private-icon,
+.room-item-dm-icon {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    flex: 0 0 auto;
+}
+/* US-009: olvasatlan DM/csatorna üzenetek piros badge-e (member_count helyett). */
+.room-item-unread {
+    flex: 0 0 auto;
+    background: #fc8181;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 22px;
+    text-align: center;
+    box-shadow: 0 0 0 2px rgba(252, 129, 129, 0.20);
+}
+.rooms-list-loading,
+.users-list-empty {
+    padding: 12px 16px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+ * US-009: DM (privát üzenet) szekció a sidebar tetején, "Privát" fejléccel.
+ * A bal sáv tartalma egy közös scroll-konténer, a DM és a publikus szobák
+ * lista-blokkjai egymás után helyezkednek el (külön scroll helyett egy
+ * scroll, hogy hosszú DM listán is megjelenhessen az "Új szoba" gomb).
+ * -------------------------------------------------------------------------- */
+.sidebar-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar-scroll > .sidebar-header,
+.sidebar-scroll > .sidebar-actions {
+    flex: 0 0 auto;
+}
+.sidebar-scroll > .rooms-list {
+    flex: 0 0 auto;     /* a közös scroll a sidebar-scroll-on, nem a listán */
+    overflow: visible;
+    min-height: 0;
+}
+
+.dm-section { display: block; flex: 0 0 auto; }
+.dm-section-header {
+    /* finomabb mint a "Szobák" fejléc — ne nyomja el azt vizuálisan */
+    border-bottom: none;
+    padding-bottom: 4px;
+}
+.dm-rooms-list { padding: 0 8px; }
+.dm-rooms-empty {
+    padding: 8px 12px 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-style: italic;
+}
+
+.room-item.is-dm .room-item-name {
+    /* DM szobához barátságos név ('DM: <peer>') — italic-mentes, sima */
+    font-weight: 500;
+}
+.room-item.is-dm.active .room-item-name {
+    font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+ * US-009: User popover ('Privát üzenet' menüelem) — fixed, anchor-pozicionált.
+ * A `position: fixed` miatt a viewport-koordinátákkal (getBoundingClientRect)
+ * pontos a hely; mobil sidebar overlay alatt is jól látszik (z-index 70 > 50).
+ * -------------------------------------------------------------------------- */
+.user-popover {
+    position: fixed;
+    z-index: 70;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 180px;
+    padding: 6px 0;
+}
+.user-popover-header {
+    padding: 8px 14px 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 4px;
+}
+.user-popover-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.92rem;
+    text-align: left;
+    cursor: pointer;
+    min-height: 40px;   /* US-017 inspiration: jól elérhető touch target */
+}
+.user-popover-item:hover,
+.user-popover-item:focus {
+    background: var(--bg-hover);
+    outline: none;
+}
+
+/* User-row clickability — kurzor + hover egyértelmű, hogy klikkelhető. */
+.user-item.is-clickable {
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.user-item.is-clickable:hover { background: var(--bg-hover); }
+.user-item.is-clickable:focus { outline: none; background: var(--bg-hover); }
+.user-item.is-self.is-clickable { cursor: default; }
+
+/* --------------------------------------------------------------------------
+ * Üzenet terület (közép) — header alatt + input form felett.
+ * -------------------------------------------------------------------------- */
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--bg-app);
+}
+
+.messages-list {
+    /* US-017: flex:1 1 0 + min-height:0 — különben flex-children min-height:auto
+     * miatt nem zsugorodik, és a teljes layout szétfolyik portrait-en. */
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    /* iOS rubber band / Android pull-to-refresh ne triggerelje a body scrollt. */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.messages-empty {
+    margin: auto;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 24px;
+}
+
+/* Üzenet buborék: bal default (mások), is-self → jobb. */
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: min(78%, 560px);
+    align-self: flex-start;
+}
+.message.is-self { align-self: flex-end; }
+
+.message-meta {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    margin: 0 6px 2px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.message.is-self .message-meta { justify-content: flex-end; }
+
+.message-username { font-weight: 600; color: var(--text-secondary); }
+.message-time { color: var(--text-muted); }
+
+.message-bubble {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: var(--bg-message-other);
+    color: var(--text-message-other);
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    font-size: 0.95rem;
+}
+.message.is-self .message-bubble {
+    background: var(--bg-message-self);
+    color: var(--text-message-self);
+}
+
+/* US-005: optimistic UI placeholder, amíg a szerver-válasz meg nem érkezik. */
+.message.is-pending .message-bubble {
+    opacity: 0.65;
+}
+
+/* --------------------------------------------------------------------------
+ * US-010: Markdown formázás üzenetbuborékon belül.
+ *  - **bold** -> <strong>, *italic* -> <em>: csak öröklik a buborék színét.
+ *  - `kód` -> <code>: monospace + halvány háttér.
+ *  - ```kódblokk``` -> <pre><code>: blokk, sortörést megőrzi, scroll-ozható
+ *    overflow-x-szel hosszú kódsoroknál (a buborék max-width-jén belül).
+ *  - https://… -> <a target="_blank">: szín a témából, hover/focus aláhúzás.
+ * Saját buborékon (kék hátteres) a <code>/<pre> halvány világos áttetsző
+ * felület, hogy ne ütközzön a kék háttérrel.
+ * -------------------------------------------------------------------------- */
+.message-bubble code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.88em;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.08);
+    color: inherit;
+}
+.message-bubble pre {
+    margin: 4px 0;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.08);
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.35;
+}
+.message-bubble pre code {
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    font-size: 0.88em;
+}
+.message.is-self .message-bubble code,
+.message.is-self .message-bubble pre {
+    background: rgba(255, 255, 255, 0.18);
+}
+.message-bubble a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    word-break: break-all;
+}
+.message-bubble a:hover,
+.message-bubble a:focus {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+.message.is-self .message-bubble a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+.message-bubble strong { font-weight: 700; }
+.message-bubble em { font-style: italic; }
+
+/* --------------------------------------------------------------------------
+ * US-014: Gépelés jelző — az üzenetek terület alján, a form FELETT.
+ * A pontok animációja CSS-sel (NEM JS-timer): 3 span ::before-szerű bounce-elés
+ * staggered animation-delay-jel. A bonyolító text 'Anna gépel...' aria-live-pol
+ * announce-olja a screen readereknek.
+ * -------------------------------------------------------------------------- */
+.typing-indicator {
+    flex: 0 0 auto;
+    padding: 4px 16px 6px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 22px;
+    border-top: 1px solid var(--border-default);
+}
+.typing-indicator[hidden] { display: none; }
+
+.typing-text {
+    font-style: italic;
+}
+
+.typing-dots {
+    display: inline-flex;
+    margin-left: 2px;
+}
+.typing-dot {
+    display: inline-block;
+    font-weight: 700;
+    animation: typing-bounce 1.4s ease-in-out infinite;
+    opacity: 0.3;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30%           { opacity: 1;   transform: translateY(-2px); }
+}
+
+/* --------------------------------------------------------------------------
+ * Üzenetküldő form — alul, flex-shrink:0, safe-area-inset-bottom.
+ * -------------------------------------------------------------------------- */
+.message-form {
+    flex: 0 0 auto;     /* US-017: keyboard nyitva is mindig látszódjon */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    /* US-017: iPhone home indicator alatt ne vágódjon */
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-default);
+}
+
+#messageInput {
+    /* US-017: MIN 16px font-size, különben iOS auto-zoom fókuszra */
+    width: 100%;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    resize: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+#messageInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15);
+}
+#messageInput:disabled {
+    background: var(--bg-app);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.message-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.char-counter {
+    /* US-017: a karakter számláló mindig látszódjon — ha kell, sorra törhet a flex */
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-right: auto;
+    white-space: nowrap;
+}
+.char-counter.warning { color: #b7791f; }
+.char-counter.error   { color: var(--color-danger); font-weight: 600; }
+
+.btn-send {
+    flex: 0 0 auto;     /* US-017: ne wrap-eljen alá portrait-en */
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px 18px;
+    min-height: 44px;
+    min-width: 88px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+.btn-send:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn-send:disabled {
+    background: var(--border-input);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+ * Online userlist (jobb sáv) — US-007.
+ * Online (zöld pötty) elöl, offline (szürke pötty) a lista alján; a sorrendet
+ * a server adja vissza (ORDER BY is_online DESC, last_seen DESC, username ASC).
+ * Saját user félkövér + "(Te)" tag-gel.
+ * -------------------------------------------------------------------------- */
+.users-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    min-height: 44px;
+}
+.user-item.is-offline {
+    color: var(--text-muted);
+}
+.user-item.is-offline .avatar {
+    background: var(--color-offline);
+}
+.user-item.is-self {
+    background: var(--bg-active-room);
+}
+.user-item.is-self .user-item-name {
+    font-weight: 700;
+}
+.user-item .avatar {
+    flex: 0 0 auto;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+.user-item-name {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.user-item-self-tag {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.8rem;
+    margin-left: 2px;
+}
+.user-item .status-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--color-online);
+    flex: 0 0 auto;
+}
+.user-item.is-offline .status-dot { background: var(--color-offline); }
+
+/* --------------------------------------------------------------------------
+ * Modal — új szoba létrehozás dialog (US-006).
+ * -------------------------------------------------------------------------- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-backdrop);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    /* US-017: notch / home indicator alatt ne vágódjon */
+    padding-top: max(16px, env(safe-area-inset-top, 16px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+    position: relative;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    padding: 28px 24px 22px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.modal-title {
+    margin: 0 0 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-form .form-row {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.modal-form label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.modal-form .form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.modal-form .form-optional {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+.modal-form .required {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.modal-form input[type="text"],
+.modal-form textarea {
+    /* US-017: 16px MIN, különben iOS auto-zoom fókuszra */
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.modal-form textarea {
+    resize: vertical;
+    min-height: 60px;
+    max-height: 160px;
+}
+.modal-form input[type="text"]:focus,
+.modal-form textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15);
+}
+
+.modal-form .form-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.modal-form .form-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+.modal-form .form-checkbox label {
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.modal-error {
+    display: none;
+    background: #fed7d7;
+    color: #9b2c2c;
+    border: 1px solid #fc8181;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+.modal-error.visible { display: block; }
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 0 0 auto;
+    min-height: 44px;
+    min-width: 96px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    border: 1px solid var(--color-primary);
+}
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+.btn-primary:disabled {
+    background: var(--border-input);
+    border-color: var(--border-input);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-input);
+}
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+ * Sidebar overlay backdrop (mobil hamburger nyitva).
+ * -------------------------------------------------------------------------- */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg-backdrop);
+    z-index: 40;
+}
+.sidebar-backdrop.visible { display: block; }
+
+/* --------------------------------------------------------------------------
+ * Mobil — max-width: 768px (US-017 breakpoint).
+ * Bal/jobb sáv overlay-ként nyílik hamburger gombról.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .chat-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .hamburger { display: inline-flex; }
+
+    /* US-017: kebab/icon-only Kijelentkezés mobile portrait-en — text levágódna */
+    .btn-logout {
+        padding: 8px 10px;
+        min-width: 44px;
+    }
+    .btn-logout-text { display: none; }
+
+    .header-username {
+        max-width: 110px;
+        font-size: 0.85rem;
+    }
+
+    .sidebar {
+        position: fixed;
+        /* Header tényleges magassága = min-height + safe-area-inset-top a notch-os
+         * eszközökön — különben a sidebar a header alá csúsztatva is takarná azt. */
+        top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+        bottom: 0;
+        width: 80%;
+        max-width: 320px;
+        z-index: 50;
+        box-shadow: var(--shadow-lg);
+        transition: transform 0.25s ease;
+        will-change: transform;
+    }
+    .sidebar-left  {
+        left: 0;
+        border-right: 1px solid var(--border-default);
+        transform: translateX(-105%);
+    }
+    .sidebar-right {
+        right: 0;
+        border-left: 1px solid var(--border-default);
+        transform: translateX(105%);
+    }
+    .sidebar.open { transform: translateX(0); }
+}
+
+/* Nagyon kicsi (≤360px): a header username-t elrejtjük a tér miatt. */
+@media (max-width: 360px) {
+    .header-username { display: none; }
+    .header-room-label { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+ * US-008: Profil oldal (profile.html) — egy oszlopos, két kártyás layout.
+ * Felül a profil mezők (avatar preview, email, bio, avatar URL),
+ * alul külön kártya a jelszó módosításához.
+ * -------------------------------------------------------------------------- */
+body.profile-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-app);
+}
+
+.btn-back {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    min-height: 44px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-back:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+.btn-back-icon { font-size: 1.1rem; line-height: 1; }
+.btn-back-text { line-height: 1; }
+
+/* Klikkelhető username link a chat header-ben — vizuálisan a span-szel egyenértékű,
+ * de fókusz / hover állapotban kiemelt. */
+a.header-username {
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    padding: 4px 6px;
+    transition: background 0.15s, color 0.15s;
+}
+a.header-username:hover,
+a.header-username:focus {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.profile-main {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    /* US-017: home indicator alatt ne vágódjon le a Mentés gomb. */
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 20px;
+}
+
+.profile-section-title {
+    margin: 0 0 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.profile-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+}
+.profile-avatar-default {
+    font-size: 1.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1;
+}
+.profile-avatar-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.profile-avatar-img[hidden] { display: none; }
+
+.profile-avatar-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.profile-username-display {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.profile-username-hint {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.profile-form .form-row {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.profile-form label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.profile-form .form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.profile-form .form-optional {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+.profile-form .required {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"],
+.profile-form input[type="url"],
+.profile-form input[type="password"],
+.profile-form textarea {
+    /* US-017: 16px MIN, különben iOS auto-zoom fókuszra */
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.profile-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+}
+.profile-form input:focus,
+.profile-form textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15);
+}
+.profile-form input[readonly],
+.profile-form input:disabled {
+    background: var(--bg-app);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.success-banner {
+    flex: 0 0 auto;
+    display: none;
+    background: #c6f6d5;
+    color: #22543d;
+    border-bottom: 1px solid #68d391;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.success-banner.visible { display: block; }
+
+.success-inline {
+    display: none;
+    background: #c6f6d5;
+    color: #22543d;
+    border: 1px solid #68d391;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.success-inline.visible { display: block; }
+
+@media (max-width: 480px) {
+    .profile-card { padding: 18px 14px; }
+    .profile-avatar-wrap { width: 60px; height: 60px; }
+    .profile-avatar-default { font-size: 1.6rem; }
+    .btn-back-text { display: none; }
+    .btn-back { padding: 8px 10px; }
+}
+
+/* --------------------------------------------------------------------------
+ * US-012: Üzenet keresés — fejléc ikon + slide-down panel az aktuális szoba
+ * üzenetein. A panel `.chat-main` legfelső gyermeke (a messages-list felett),
+ * `max-height: 0` + transition-nel animáltan nyílik. Eredmények kártyaszerűen,
+ * a keresett szó `<mark>`-elve sárga háttérrel.
+ * -------------------------------------------------------------------------- */
+.header-icon-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.header-icon-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+.header-icon-btn[aria-expanded="true"] {
+    background: var(--bg-active-room);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.header-icon-btn-icon { font-size: 1.1rem; line-height: 1; }
+
+.search-panel {
+    flex: 0 0 auto;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, border-bottom-width 0.3s ease;
+    padding: 0 12px;
+}
+.search-panel.open {
+    /* dvh, hogy iOS keyboard nyitva is megfelelő legyen — az eredmény-lista
+     * belül scrollozik. */
+    max-height: 60dvh;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#searchInput {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    /* US-017: 16px MIN, különben iOS auto-zoom fókuszra */
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+#searchInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15);
+}
+
+.search-close {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.search-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.search-status {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 6px 2px 4px;
+    min-height: 1.1em;
+}
+
+.search-results {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.search-result {
+    background: var(--bg-app);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+.search-result:hover,
+.search-result:focus {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    outline: none;
+}
+
+.search-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.search-result-username { font-weight: 700; color: var(--text-secondary); }
+.search-result-room {
+    background: var(--bg-active-room);
+    color: var(--color-primary);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.search-result-time { color: var(--text-muted); }
+
+.search-result-snippet {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+.search-result-snippet mark {
+    background: #fef08a;          /* sárga háttér — AC szerint */
+    color: #713f12;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* Találat-fókusz kiemelés: a click-after-jump rövid sárga pulse a buborékon. */
+.message.is-search-target .message-bubble {
+    animation: search-target-pulse 2.4s ease-out 1;
+}
+@keyframes search-target-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.0); background-image: linear-gradient(rgba(254, 240, 138, 0.55), rgba(254, 240, 138, 0.55)); }
+    25%  { box-shadow: 0 0 0 4px rgba(254, 240, 138, 0.65); }
+    100% { box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.0); background-image: none; }
+}
+
+@media (max-width: 768px) {
+    .search-panel.open { max-height: 70dvh; }
+}
+@media (max-width: 480px) {
+    /* Nagyon kicsi viewport-on a fejléc-ikon és a logout szorosan fut. */
+    .header-icon-btn { width: 40px; height: 40px; }
+    .header-icon-btn-icon { font-size: 1rem; }
+}
+
+/* --------------------------------------------------------------------------
+ * US-013: Sötét téma — [data-theme="dark"] override-ok a :root változókhoz.
+ * A világos téma a default (a :root-ban definiálva fent), a sötét csak felülírja
+ * ugyanazokat a custom property-ket, így minden komponens automatikusan átszínezi
+ * magát.  A téma váltás localStorage-ban perzisztál (chat.js / profile.js / auth
+ * pages bootstrap-script).
+ *
+ * Az AC szerint: világos = #fff háttér + sötét szöveg + világoskék saját üzenet,
+ * sötét = #1e1e2e háttér + világos szöveg + sötétkék saját üzenet, animált 300ms
+ * átmenet.
+ * -------------------------------------------------------------------------- */
+:root {
+    color-scheme: light;
+}
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg-app:           #1e1e2e;
+    --bg-surface:       #2a2a3a;
+    --bg-sidebar:       #252535;
+    --bg-input:         #2f2f40;
+    --bg-message-self:  #3b5ec9;     /* sötétkék saját üzenet — AC */
+    --bg-message-other: #353548;
+    --bg-active-room:   #3a3f55;
+    --bg-hover:         #2f2f40;
+    --bg-backdrop:      rgba(0, 0, 0, 0.65);
+
+    --text-primary:     #e6e6f0;
+    --text-secondary:   #b8b8c8;
+    --text-muted:       #8a8ba0;
+    --text-on-primary:  #ffffff;
+    --text-message-self:#ffffff;
+    --text-message-other:#e6e6f0;
+
+    --border-default:   #393950;
+    --border-input:     #4a4a60;
+    --border-strong:    #5a5a72;
+
+    --color-primary:       #6688ff;
+    --color-primary-hover: #7a98ff;
+    --color-online:        #4cd07d;
+    --color-offline:       #6a6a82;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+/* Animált 300ms átmenet a téma váltáskor — `<html>` egy rövid (~350ms) ablakra
+ * kapja meg a `.theme-transitioning` osztályt, alatta minden elem egyszeri,
+ * sima 300ms-os fade-et csinál.  Az osztály után az elemek visszaesnek a saját
+ * (gyorsabb) hover/focus transition-jeikre (0.12s/0.15s), így a téma váltás
+ * NEM lassítja a default UX-et. */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+    transition: background-color 300ms ease,
+                color 300ms ease,
+                border-color 300ms ease,
+                box-shadow 300ms ease !important;
+}
+
+/* Sötét témán a kód-háttér áttetsző fehér helyett áttetsző világos. */
+[data-theme="dark"] .message-bubble code,
+[data-theme="dark"] .message-bubble pre {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Sötét téma: hibasáv + sikeres bannerek olvasható kontrasztra állítva
+ * (a default piros/zöld pasztell tónusok sötét hátteren túl éles fehérek). */
+[data-theme="dark"] .error-banner {
+    background: #4a1f1f;
+    color: #fed7d7;
+    border-bottom-color: #6e2a2a;
+}
+[data-theme="dark"] .modal-error {
+    background: #4a1f1f;
+    color: #fed7d7;
+    border-color: #6e2a2a;
+}
+[data-theme="dark"] .success-banner {
+    background: #1f4a2e;
+    color: #c6f6d5;
+    border-bottom-color: #2a6e3f;
+}
+[data-theme="dark"] .success-inline {
+    background: #1f4a2e;
+    color: #c6f6d5;
+    border-color: #2a6e3f;
+}
+
+/* Sötét témán a search-highlight `<mark>` is olvasható maradjon. */
+[data-theme="dark"] .search-result-snippet mark {
+    background: #fef08a;
+    color: #1a1a26;
+}
+
+/* US-013: téma váltó gomb a fejlécben — a meglévő .header-icon-btn-re ráül. */
+.theme-toggle-icon { font-size: 1.1rem; line-height: 1; }
+
+/* --------------------------------------------------------------------------
+ * US-016: '+ Meghívás' gomb a fejlécben (a szoba neve után). Csak privát,
+ * NEM-DM aktív szobánál látszik (a JS állítja a [hidden]-t).
+ * -------------------------------------------------------------------------- */
+.btn-invite {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    min-height: 32px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.btn-invite[hidden] { display: none; }
+.btn-invite:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+.btn-invite-icon { font-size: 1rem; line-height: 1; font-weight: 700; }
+
+/* Mobilon (max 480px) a felirat lemarad — csak a + ikon látszik, hogy a header
+ * ne tűnjön el. Ugyanaz a minta, mint a btn-logout-text. */
+@media (max-width: 480px) {
+    .btn-invite { padding: 6px 8px; min-width: 32px; }
+    .btn-invite-text { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+ * US-016: meghívó modal — a '.modal' és '.modal-form' alap stílusát örökli,
+ * itt csak a meghívó-specifikus blokkok (autocomplete, member list, selected).
+ * -------------------------------------------------------------------------- */
+.invite-room-name {
+    margin: -8px 0 14px;
+    padding: 8px 12px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Autocomplete wrapper: a suggestion-listához relatív horgonyzás. */
+.invite-autocomplete {
+    position: relative;
+}
+.invite-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 4px 0 0;
+    padding: 4px 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    list-style: none;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 10;
+}
+.invite-suggestions[hidden] { display: none; }
+.invite-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-default);
+}
+.invite-suggestion:last-child { border-bottom: none; }
+.invite-suggestion:hover,
+.invite-suggestion.is-active {
+    background: var(--bg-hover);
+}
+.invite-suggestion.is-member {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+.invite-suggestion-tag {
+    margin-left: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+.invite-suggestion-empty {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Kiválasztott felhasználó pill — egy kis chip, X-szel törölhető. */
+.invite-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: -6px 0 14px;
+    padding: 6px 10px;
+    background: var(--bg-hover);
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+.invite-selected[hidden] { display: none; }
+.invite-selected-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+.invite-selected-name { font-weight: 600; }
+.invite-selected-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 4px;
+    border-radius: 50%;
+}
+.invite-selected-clear:hover {
+    background: var(--bg-app);
+    color: var(--text-primary);
+}
+
+/* "Már tag" lista a modal alján. */
+.invite-members {
+    margin-bottom: 14px;
+}
+.invite-members-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.invite-members-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-app);
+}
+.invite-members-list li {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-default);
+}
+.invite-members-list li:last-child { border-bottom: none; }
+.invite-members-loading,
+.invite-members-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Sikeres meghívás zöld banner a modal-on belül — a profile US-008-béles success-inline-t imitálja. */
+.invite-success {
+    display: none;
+    background: #c6f6d5;
+    color: #22543d;
+    border: 1px solid #68d391;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+.invite-success.visible { display: block; }
+[data-theme="dark"] .invite-success {
+    background: #1f4a2e;
+    color: #c6f6d5;
+    border-color: #2a6e3f;
+}

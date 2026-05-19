@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "name": "minichat",
+      "title": "MiniChat",
+      "tagline": "Valós idejű csevegőalkalmazás szobákkal, DM-mel és keresővel",
+      "icon": "chat",
+      "color": "#6366f1",
+      "tech": [
+        "PHP",
+        "MySQL",
+        "AJAX",
+        "CSS"
+      ],
+      "deployed_at": "2026-04-29",
+      "run_id": "minichat_2026-04-28_1246",
+      "us_count": 17,
+      "bug_count": 1,
+      "status": "PASS",
+      "has_source_zip": true,
+      "has_prd": true,
+      "has_programterv": true,
+      "has_token_report": true,
+      "token_cost_usd": 452.63
+    }
+  ],
+  "generated_at": "2026-04-29T06:45:00+02:00"
+}

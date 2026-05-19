@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <!-- US-017: viewport-fit=cover a safe-area-inset-* támogatásához (notch / home indicator). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#4f7cff">
+    <title>MiniChat — Profil</title>
+    <!-- US-013: téma alkalmazása a CSS előtt — FOUC védelem. -->
+    <script>(function(){try{var t=localStorage.getItem('minichat_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="profile-page">
+    <header class="chat-header">
+        <a href="chat.html" class="btn-back" id="backBtn" title="Vissza a chathez">
+            <span class="btn-back-icon" aria-hidden="true">←</span>
+            <span class="btn-back-text">Vissza</span>
+        </a>
+        <div class="header-room">
+            <span class="header-room-name">Profil szerkesztése</span>
+        </div>
+
+        <!-- US-013: téma váltó (világos ↔ sötét) — minden oldalon érvényes. -->
+        <button type="button" id="themeToggleBtn" class="header-icon-btn"
+                aria-label="Téma váltása" title="Téma váltása">
+            <span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">🌙</span>
+        </button>
+    </header>
+
+    <div id="errorBanner" class="error-banner" role="alert" aria-live="polite"></div>
+    <div id="successBanner" class="success-banner" role="status" aria-live="polite"></div>
+
+    <main class="profile-main">
+        <section class="profile-card" aria-label="Profil adatok">
+            <div class="profile-avatar-row">
+                <div class="profile-avatar-wrap" id="avatarWrap" aria-hidden="true">
+                    <span class="profile-avatar-default" id="avatarDefault">?</span>
+                    <img class="profile-avatar-img" id="avatarPreview" alt="" hidden>
+                </div>
+                <div class="profile-avatar-meta">
+                    <div class="profile-username-display" id="usernameDisplay">…</div>
+                    <div class="profile-username-hint">A felhasználónév nem módosítható.</div>
+                </div>
+            </div>
+
+            <form class="profile-form" id="profileForm" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <label for="profileUsername">Felhasználónév</label>
+                    <input type="text" id="profileUsername" name="username"
+                           readonly disabled tabindex="-1">
+                </div>
+
+                <div class="form-row">
+                    <label for="profileEmail">Email <span class="required" aria-hidden="true">*</span></label>
+                    <input type="email" id="profileEmail" name="email"
+                           required maxlength="100" autocomplete="email">
+                </div>
+
+                <div class="form-row">
+                    <label for="profileBio">Bemutatkozás <span class="form-optional">(opcionális)</span></label>
+                    <textarea id="profileBio" name="bio"
+                              rows="3" maxlength="200"
+                              placeholder="Mit mondanál magadról?"></textarea>
+                    <span class="form-hint">
+                        <span id="bioCounter">0/200</span> karakter
+                    </span>
+                </div>
+
+                <div class="form-row">
+                    <label for="profileAvatar">Avatar URL <span class="form-optional">(opcionális)</span></label>
+                    <input type="url" id="profileAvatar" name="avatar_url"
+                           maxlength="500" placeholder="https://...">
+                    <span class="form-hint">https:// kezdetű URL. Üresen hagyva a betűs avatar marad.</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="profileSubmit" class="btn-primary" disabled>Mentés</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="profile-card" aria-label="Jelszó módosítás">
+            <h2 class="profile-section-title">Jelszó módosítás</h2>
+
+            <div id="passwordError" class="modal-error" role="alert" aria-live="polite"></div>
+            <div id="passwordSuccess" class="success-inline" role="status" aria-live="polite"></div>
+
+            <form class="profile-form" id="passwordForm" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <label for="oldPassword">Régi jelszó <span class="required" aria-hidden="true">*</span></label>
+                    <input type="password" id="oldPassword" name="old_password"
+                           required autocomplete="current-password">
+                </div>
+
+                <div class="form-row">
+                    <label for="newPassword">Új jelszó <span class="required" aria-hidden="true">*</span></label>
+                    <input type="password" id="newPassword" name="new_password"
+                           required minlength="6" autocomplete="new-password">
+                    <span class="form-hint">Legalább 6 karakter.</span>
+                </div>
+
+                <div class="form-row">
+                    <label for="newPasswordConfirm">Új jelszó megerősítés <span class="required" aria-hidden="true">*</span></label>
+                    <input type="password" id="newPasswordConfirm" name="new_password_confirm"
+                           required minlength="6" autocomplete="new-password">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="passwordSubmit" class="btn-primary" disabled>Jelszó módosítás</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="js/profile.js"></script>
+</body>
+</html>

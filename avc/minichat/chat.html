@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <!-- US-017: viewport-fit=cover a safe-area-inset-* támogatásához (notch / home indicator). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#4f7cff">
+    <title>MiniChat</title>
+    <!-- US-013: téma alkalmazása MIELŐTT a CSS megérkezne — különben FOUC (egy
+         pillanatig a default light téma villan be sötét beállításnál is). -->
+    <script>(function(){try{var t=localStorage.getItem('minichat_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="chat-page">
+    <header class="chat-header">
+        <button type="button" id="toggleRooms" class="hamburger hamburger-left"
+                aria-label="Szobák megnyitása" title="Szobák">
+            <span class="hamburger-icon" aria-hidden="true">☰</span>
+        </button>
+
+        <div class="header-room">
+            <span class="header-room-label">Szoba:</span>
+            <span class="header-room-name" id="currentRoomName">Lobby</span>
+            <!-- US-016: meghívó gomb — csak privát, NEM-DM aktív szobánál látszik. -->
+            <button type="button" id="inviteBtn" class="btn-invite" title="Felhasználó meghívása"
+                    aria-label="Felhasználó meghívása" hidden>
+                <span class="btn-invite-icon" aria-hidden="true">+</span>
+                <span class="btn-invite-text">Meghívás</span>
+            </button>
+        </div>
+
+        <button type="button" id="searchBtn" class="header-icon-btn"
+                aria-label="Üzenet keresés" title="Keresés (3+ karakter)"
+                aria-expanded="false" aria-controls="searchPanel">
+            <span class="header-icon-btn-icon" aria-hidden="true">🔍</span>
+        </button>
+
+        <!-- US-013: téma váltó (világos ↔ sötét) — ikon a JS-ből: 🌙 vagy ☀️. -->
+        <button type="button" id="themeToggleBtn" class="header-icon-btn"
+                aria-label="Téma váltása" title="Téma váltása">
+            <span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">🌙</span>
+        </button>
+
+        <a href="profile.html" class="header-username" id="usernameLabel"
+           title="Profil szerkesztése" aria-live="polite"></a>
+
+        <button type="button" id="logoutBtn" class="btn-logout" title="Kijelentkezés">
+            <span class="btn-logout-icon" aria-hidden="true">⏻</span>
+            <span class="btn-logout-text">Kijelentkezés</span>
+        </button>
+
+        <button type="button" id="toggleUsers" class="hamburger hamburger-right"
+                aria-label="Online felhasználók" title="Online felhasználók">
+            <span class="hamburger-icon" aria-hidden="true">👥</span>
+        </button>
+    </header>
+
+    <div id="errorBanner" class="error-banner" role="alert" aria-live="polite"></div>
+
+    <div class="chat-layout">
+        <aside class="sidebar sidebar-left" id="sidebarRooms" aria-label="Szobák">
+            <div class="sidebar-scroll">
+                <!-- US-009: privát üzenet (DM) szekció a publikus szobalista FELETT. -->
+                <div class="dm-section" id="dmSection">
+                    <div class="sidebar-header dm-section-header">Privát</div>
+                    <ul class="rooms-list dm-rooms-list" id="dmRoomsList" role="list">
+                        <li class="dm-rooms-empty">Még nincs privát beszélgetés.</li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-header">Szobák</div>
+                <div class="sidebar-actions">
+                    <button type="button" id="newRoomBtn" class="btn-new-room" title="Új szoba létrehozása">
+                        <span class="btn-new-room-icon" aria-hidden="true">+</span>
+                        <span class="btn-new-room-text">Új szoba</span>
+                    </button>
+                </div>
+                <ul class="rooms-list" id="roomsList" role="list">
+                    <li class="rooms-list-loading">Betöltés…</li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="chat-main" role="main" aria-label="Üzenetek">
+            <!-- US-012: keresőpanel — alapból zárva (max-height:0 + overflow:hidden);
+                 az `.open` osztály animáltan kinyitja. A keresés az aktuális szobában fut. -->
+            <section class="search-panel" id="searchPanel" aria-label="Üzenet keresés"
+                     aria-hidden="true">
+                <form class="search-form" id="searchForm" autocomplete="off" role="search">
+                    <label for="searchInput" class="visually-hidden">Keresőmező</label>
+                    <input type="search" id="searchInput" name="q"
+                           placeholder="Keresés az aktuális szobában (legalább 3 karakter)…"
+                           maxlength="100"
+                           inputmode="search"
+                           autocomplete="off"
+                           autocapitalize="off"
+                           spellcheck="false">
+                    <button type="button" id="searchClose" class="search-close"
+                            aria-label="Keresés bezárása" title="Bezárás">×</button>
+                </form>
+                <div class="search-status" id="searchStatus" role="status" aria-live="polite"></div>
+                <div class="search-results" id="searchResults"></div>
+            </section>
+
+            <div class="messages-list" id="messagesList" aria-live="polite">
+                <div class="messages-empty" id="messagesEmpty">Üzenetek betöltése…</div>
+            </div>
+
+            <!-- US-014: gépelés jelző — alapból rejtett, a polling válasz alapján töltődik. -->
+            <div class="typing-indicator" id="typingIndicator" role="status" aria-live="polite" hidden>
+                <span class="typing-text" id="typingText"></span><span class="typing-dots" aria-hidden="true"><span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
+            </div>
+
+            <form class="message-form" id="messageForm" autocomplete="off">
+                <label for="messageInput" class="visually-hidden">Üzenet</label>
+                <textarea
+                    id="messageInput"
+                    name="message"
+                    rows="1"
+                    placeholder="Írj üzenetet…"
+                    maxlength="1000"
+                    inputmode="text"
+                    autocapitalize="sentences"
+                    autocorrect="on"
+                    spellcheck="true"
+                    disabled
+                ></textarea>
+                <div class="message-form-actions">
+                    <span class="char-counter" id="charCounter" aria-live="polite">0/1000</span>
+                    <button type="submit" id="sendBtn" class="btn-send" disabled>Küldés</button>
+                </div>
+            </form>
+        </main>
+
+        <aside class="sidebar sidebar-right" id="sidebarUsers" aria-label="Online felhasználók">
+            <div class="sidebar-header">Online</div>
+            <ul class="users-list" id="usersList" role="list">
+                <li class="users-list-empty">Hamarosan elérhető.</li>
+            </ul>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+    </div>
+
+    <div class="modal-overlay" id="newRoomModal" role="dialog" aria-modal="true"
+         aria-labelledby="newRoomModalTitle" hidden>
+        <div class="modal">
+            <button type="button" id="newRoomClose" class="modal-close"
+                    aria-label="Bezárás" title="Bezárás">×</button>
+            <h2 id="newRoomModalTitle" class="modal-title">Új szoba létrehozása</h2>
+
+            <form id="newRoomForm" class="modal-form" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <label for="newRoomName">Szoba név <span class="required" aria-hidden="true">*</span></label>
+                    <input type="text" id="newRoomName" name="name"
+                           minlength="2" maxlength="30" required
+                           placeholder="Pl. Fejlesztők">
+                    <span class="form-hint">2–30 karakter, egyedi.</span>
+                </div>
+
+                <div class="form-row">
+                    <label for="newRoomDescription">Leírás <span class="form-optional">(opcionális)</span></label>
+                    <textarea id="newRoomDescription" name="description"
+                              rows="2" maxlength="200"
+                              placeholder="Mit beszéltek itt?"></textarea>
+                </div>
+
+                <div class="form-row form-checkbox">
+                    <input type="checkbox" id="newRoomPrivate" name="is_private">
+                    <label for="newRoomPrivate">Privát szoba (csak meghívottak láthatják)</label>
+                </div>
+
+                <div class="modal-error" id="newRoomError" role="alert" aria-live="polite"></div>
+
+                <div class="modal-actions">
+                    <button type="button" id="newRoomCancel" class="btn-secondary">Mégse</button>
+                    <button type="submit" id="newRoomSubmit" class="btn-primary">Létrehozás</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- US-016: meghívó modal — privát szobához új tag hozzáadása. -->
+    <div class="modal-overlay" id="inviteModal" role="dialog" aria-modal="true"
+         aria-labelledby="inviteModalTitle" hidden>
+        <div class="modal">
+            <button type="button" id="inviteClose" class="modal-close"
+                    aria-label="Bezárás" title="Bezárás">×</button>
+            <h2 id="inviteModalTitle" class="modal-title">Felhasználó meghívása</h2>
+
+            <div class="invite-room-name" id="inviteRoomName"></div>
+
+            <form id="inviteForm" class="modal-form" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <label for="inviteSearchInput">Felhasználónév <span class="required" aria-hidden="true">*</span></label>
+                    <div class="invite-autocomplete">
+                        <input type="text" id="inviteSearchInput" name="q"
+                               minlength="2" maxlength="50"
+                               placeholder="Kezdj el gépelni (legalább 2 karakter)…"
+                               autocomplete="off" autocapitalize="off" spellcheck="false">
+                        <ul class="invite-suggestions" id="inviteSuggestions" role="listbox" hidden></ul>
+                    </div>
+                    <span class="form-hint" id="inviteSearchHint">A találatokra kattintva kiválaszthatod a meghívandót.</span>
+                </div>
+
+                <div class="invite-selected" id="inviteSelected" hidden>
+                    <span class="invite-selected-label">Kiválasztva:</span>
+                    <span class="invite-selected-name" id="inviteSelectedName"></span>
+                    <button type="button" id="inviteSelectedClear" class="invite-selected-clear"
+                            aria-label="Kiválasztás törlése" title="Másik felhasználó">×</button>
+                </div>
+
+                <div class="invite-members">
+                    <div class="invite-members-title">Már a szoba tagja:</div>
+                    <ul class="invite-members-list" id="inviteMembersList" role="list">
+                        <li class="invite-members-loading">Betöltés…</li>
+                    </ul>
+                </div>
+
+                <div class="modal-error" id="inviteError" role="alert" aria-live="polite"></div>
+                <div class="invite-success" id="inviteSuccess" role="status" aria-live="polite" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" id="inviteCancel" class="btn-secondary">Bezárás</button>
+                    <button type="submit" id="inviteSubmit" class="btn-primary" disabled>Meghívás</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/chat.js"></script>
+</body>
+</html>

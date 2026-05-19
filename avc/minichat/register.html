@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <!-- US-017: viewport-fit=cover a safe-area-inset-* támogatásához (notch / home indicator). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#4f7cff">
+    <title>MiniChat — Regisztráció</title>
+    <!-- US-013: téma alkalmazása a CSS előtt — FOUC védelem. -->
+    <script>(function(){try{var t=localStorage.getItem('minichat_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;     /* US-017: dynamic viewport — iOS Safari keyboard ne vágja le. */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* US-017: notch / home indicator alatt ne vágódjon. */
+            padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+            -webkit-text-size-adjust: 100%;
+        }
+        .auth-card {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            padding: 32px 28px;
+            border-radius: 12px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+        }
+        .auth-card h1 {
+            margin: 0 0 8px;
+            font-size: 1.6rem;
+            color: #2d3748;
+        }
+        .auth-card .subtitle {
+            margin: 0 0 24px;
+            color: #718096;
+            font-size: 0.95rem;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            /* US-017: 16px MIN, különben iOS Safari auto-zoom fókuszra. */
+            font-size: 16px;
+            min-height: 44px;       /* US-017: 44x44 touch target. */
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+        .form-group .field-hint {
+            font-size: 0.8rem;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 11px;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            min-height: 44px;       /* US-017: 44x44 touch target. */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-primary:hover:not(:disabled) { background: #5a67d8; }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .error-banner {
+            display: none;
+            background: #fed7d7;
+            color: #9b2c2c;
+            border: 1px solid #fc8181;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .error-banner.visible { display: block; }
+        .auth-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+        .auth-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .auth-footer a:hover { text-decoration: underline; }
+
+        /* US-013: sötét téma override-ok. */
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1a1f3a 0%, #2a1f3a 100%);
+            color: #e6e6f0;
+        }
+        [data-theme="dark"] .auth-card {
+            background: #2a2a3a;
+            color: #e6e6f0;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+        }
+        [data-theme="dark"] .auth-card h1 { color: #e6e6f0; }
+        [data-theme="dark"] .auth-card .subtitle { color: #b8b8c8; }
+        [data-theme="dark"] .form-group label { color: #b8b8c8; }
+        [data-theme="dark"] .form-group input {
+            background: #2f2f40;
+            color: #e6e6f0;
+            border-color: #4a4a60;
+        }
+        [data-theme="dark"] .form-group input:focus {
+            border-color: #6688ff;
+            box-shadow: 0 0 0 3px rgba(102, 136, 255, 0.25);
+        }
+        [data-theme="dark"] .form-group .field-hint { color: #8a8ba0; }
+        [data-theme="dark"] .auth-footer { color: #b8b8c8; }
+        [data-theme="dark"] .auth-footer a { color: #6688ff; }
+        [data-theme="dark"] .error-banner {
+            background: #4a1f1f;
+            color: #fed7d7;
+            border-color: #6e2a2a;
+        }
+    </style>
+</head>
+<body>
+    <main class="auth-card" role="main">
+        <h1>Regisztráció</h1>
+        <p class="subtitle">Hozz létre fiókot, és csatlakozz a chat-hez!</p>
+
+        <div id="errorBanner" class="error-banner" role="alert" aria-live="polite"></div>
+
+        <form id="registerForm" novalidate autocomplete="off">
+            <input type="hidden" name="csrf_token" id="csrfToken" value="">
+
+            <div class="form-group">
+                <label for="username">Felhasználónév</label>
+                <!-- US-017: iOS Safari NE auto-capitalize/correct-olja a felhasználónevet. -->
+                <input type="text" id="username" name="username" required minlength="3" maxlength="50"
+                       autocomplete="username"
+                       inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false">
+                <div class="field-hint">Minimum 3 karakter</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <!-- US-017: iOS Safari NE auto-capitalize/correct-olja az email mezőt. -->
+                <input type="email" id="email" name="email" required maxlength="100"
+                       autocomplete="email"
+                       inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Jelszó</label>
+                <!-- US-017: jelszó mezőre szintén auto-capitalize/correct kikapcsolva. -->
+                <input type="password" id="password" name="password" required minlength="6"
+                       autocomplete="new-password"
+                       autocapitalize="none" autocorrect="off" spellcheck="false">
+                <div class="field-hint">Minimum 6 karakter</div>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordConfirm">Jelszó megerősítése</label>
+                <input type="password" id="passwordConfirm" name="password_confirm" required minlength="6"
+                       autocomplete="new-password"
+                       autocapitalize="none" autocorrect="off" spellcheck="false">
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-primary">Regisztráció</button>
+        </form>
+
+        <div class="auth-footer">
+            Már van fiókod? <a href="index.html">Jelentkezz be!</a>
+        </div>
+    </main>
+
+    <script>
+    (function () {
+        'use strict';
+
+        var form          = document.getElementById('registerForm');
+        var errorBanner   = document.getElementById('errorBanner');
+        var submitBtn     = document.getElementById('submitBtn');
+        var csrfInput     = document.getElementById('csrfToken');
+        var usernameInput = document.getElementById('username');
+        var emailInput    = document.getElementById('email');
+        var passwordInput = document.getElementById('password');
+        var passwordConfirmInput = document.getElementById('passwordConfirm');
+
+        var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function showError(msg) {
+            errorBanner.textContent = msg;
+            errorBanner.classList.add('visible');
+            errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function clearError() {
+            errorBanner.textContent = '';
+            errorBanner.classList.remove('visible');
+        }
+
+        function validateClient() {
+            var username = usernameInput.value.trim();
+            var email    = emailInput.value.trim();
+            var password = passwordInput.value;
+            var confirm  = passwordConfirmInput.value;
+
+            if (!username || !email || !password || !confirm) {
+                return 'Minden mező kitöltése kötelező.';
+            }
+            if (username.length < 3) {
+                return 'A felhasználónév legalább 3 karakter legyen.';
+            }
+            if (!EMAIL_RE.test(email)) {
+                return 'Érvénytelen email formátum.';
+            }
+            if (password.length < 6) {
+                return 'A jelszó legalább 6 karakter legyen.';
+            }
+            if (password !== confirm) {
+                return 'A két jelszó nem egyezik.';
+            }
+            return null;
+        }
+
+        function loadCsrfToken() {
+            return fetch('api/auth.php?action=csrf_token', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            }).then(function (r) {
+                return r.json();
+            }).then(function (data) {
+                if (data && data.success && data.token) {
+                    csrfInput.value = data.token;
+                } else {
+                    throw new Error('Nem sikerült CSRF tokent szerezni.');
+                }
+            });
+        }
+
+        function submitRegister(payload) {
+            return fetch('api/auth.php?action=register', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).then(function (r) {
+                return r.json().then(function (data) {
+                    return { status: r.status, body: data };
+                });
+            });
+        }
+
+        form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            clearError();
+
+            var clientErr = validateClient();
+            if (clientErr) {
+                showError(clientErr);
+                return;
+            }
+
+            if (!csrfInput.value) {
+                showError('Hiányzó CSRF token. Töltsd újra az oldalt.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Regisztráció…';
+
+            var payload = {
+                username:         usernameInput.value.trim(),
+                email:            emailInput.value.trim(),
+                password:         passwordInput.value,
+                password_confirm: passwordConfirmInput.value,
+                csrf_token:       csrfInput.value
+            };
+
+            submitRegister(payload).then(function (res) {
+                if (res.body && res.body.success) {
+                    var target = res.body.redirect ? res.body.redirect : 'chat.html';
+                    window.location.href = target;
+                    return;
+                }
+                var msg = (res.body && res.body.error) ? res.body.error : 'Ismeretlen hiba történt.';
+                showError(msg);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Regisztráció';
+            }).catch(function (err) {
+                showError('Hálózati hiba: ' + (err && err.message ? err.message : 'ismeretlen'));
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Regisztráció';
+            });
+        });
+
+        loadCsrfToken().catch(function (err) {
+            showError('Nem sikerült betölteni a biztonsági tokent: ' + (err && err.message ? err.message : 'ismeretlen') + '. Töltsd újra az oldalt.');
+            submitBtn.disabled = true;
+        });
+
+        // US-017: iOS Safari keyboard fókuszon a body scrollTop felfelé csúszhat.
+        // A focus event-en visszahúzzuk a top-ra, hogy az auth-card látható maradjon.
+        function resetScrollOnFocus() {
+            window.scrollTo(0, 0);
+            if (document.body) { document.body.scrollTop = 0; }
+        }
+        [usernameInput, emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
+            if (el) { el.addEventListener('focus', resetScrollOnFocus); }
+        });
+    })();
+    </script>
+</body>
+</html>

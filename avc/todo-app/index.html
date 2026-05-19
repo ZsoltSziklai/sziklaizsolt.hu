@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #1d1d1f;
+    }
+
+    .todo-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .todo-input {
+      flex: 1 1 200px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .todo-input:focus {
+      border-color: #0071e3;
+    }
+
+    .todo-due-input {
+      padding: 12px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .todo-due-input:focus {
+      border-color: #0071e3;
+    }
+
+    .todo-due-input:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-add-btn {
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #fff;
+      background: #0071e3;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .todo-add-btn:hover {
+      background: #0077ed;
+    }
+
+    .todo-add-btn:active {
+      background: #0062c4;
+    }
+
+    .todo-search {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .todo-search-input {
+      width: 100%;
+      padding: 10px 36px 10px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .todo-search-input::-webkit-search-cancel-button {
+      display: none;
+    }
+
+    .todo-search-input:focus {
+      border-color: #0071e3;
+    }
+
+    .todo-search-input:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-search-clear {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      font-size: 1rem;
+      line-height: 1;
+      color: #86868b;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .todo-search-clear:hover {
+      background: #f0f0f3;
+      color: #1d1d1f;
+    }
+
+    .todo-search-clear:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-search-clear[hidden] {
+      display: none;
+    }
+
+    .todo-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      justify-content: center;
+    }
+
+    .todo-filter {
+      padding: 6px 14px;
+      font-size: 0.95rem;
+      color: #1d1d1f;
+      text-decoration: none;
+      border: 1px solid #d2d2d7;
+      border-radius: 999px;
+      background: #fff;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .todo-filter:hover {
+      background: #f0f0f3;
+    }
+
+    .todo-filter.is-active {
+      background: #0071e3;
+      border-color: #0071e3;
+      color: #fff;
+    }
+
+    .todo-filter:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-sort {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .todo-sort-label {
+      font-size: 0.9rem;
+      color: #515154;
+    }
+
+    .todo-sort-btn {
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .todo-sort-btn:hover {
+      background: #f0f0f3;
+    }
+
+    .todo-sort-btn.is-active {
+      background: #0071e3;
+      border-color: #0071e3;
+      color: #fff;
+    }
+
+    .todo-sort-btn:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-view-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      justify-content: center;
+    }
+
+    .todo-view-btn {
+      padding: 6px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .todo-view-btn:hover {
+      background: #f0f0f3;
+    }
+
+    .todo-view-btn.is-active {
+      background: #0071e3;
+      border-color: #0071e3;
+      color: #fff;
+    }
+
+    .todo-view-btn:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-day-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      background: #f0f7ff;
+      border: 1px solid #0071e3;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      color: #0071e3;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .todo-day-filter-clear {
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      font-size: 0.95rem;
+      line-height: 1;
+      color: #0071e3;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .todo-day-filter-clear:hover {
+      background: #d6e9ff;
+    }
+
+    .todo-day-filter-clear:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .todo-cal-nav-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      font-size: 1.25rem;
+      line-height: 1;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .todo-cal-nav-btn:hover {
+      background: #f0f0f3;
+      border-color: #0071e3;
+    }
+
+    .todo-cal-nav-btn:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-cal-title {
+      flex: 1;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1d1d1f;
+      text-transform: capitalize;
+    }
+
+    .todo-cal-grid-wrap {
+      overflow-x: auto;
+    }
+
+    .todo-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(60px, 1fr));
+      gap: 4px;
+      min-width: 420px;
+    }
+
+    .todo-cal-header {
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #515154;
+      padding: 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .todo-cal-day {
+      font-family: inherit;
+      font-size: 0.85rem;
+      text-align: left;
+      background: #fafafa;
+      border: 1px solid #e5e5e7;
+      border-radius: 6px;
+      padding: 6px;
+      min-height: 84px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .todo-cal-day:hover {
+      background: #f0f0f3;
+      border-color: #0071e3;
+    }
+
+    .todo-cal-day.is-other-month {
+      background: transparent;
+      border-color: #f0f0f3;
+    }
+
+    .todo-cal-day.is-other-month .todo-cal-day-num {
+      color: #c7c7cc;
+    }
+
+    .todo-cal-day.is-today {
+      border-color: #0071e3;
+      background: #f0f7ff;
+    }
+
+    .todo-cal-day.is-today .todo-cal-day-num {
+      color: #0071e3;
+    }
+
+    .todo-cal-day:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-cal-day-num {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #1d1d1f;
+    }
+
+    .todo-cal-day-todos {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .todo-cal-todo {
+      font-size: 0.75rem;
+      background: #0071e3;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .todo-cal-todo.is-overdue {
+      background: #d70015;
+    }
+
+    .todo-cal-todo.is-done {
+      background: #c7c7cc;
+      text-decoration: line-through;
+    }
+
+    .todo-cal-more {
+      font-size: 0.7rem;
+      color: #515154;
+      padding: 0 2px;
+    }
+
+    .todo-list {
+      list-style: none;
+    }
+
+    .todo-list:empty::after {
+      content: "Nincs tennivaló — adj hozzá egyet!";
+      display: block;
+      text-align: center;
+      color: #86868b;
+      padding: 32px 16px;
+      font-style: italic;
+      border: 1px dashed #e5e5e7;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .todo-list[data-empty="search"]:empty::after {
+      content: "Nincs találat";
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid #e5e5e7;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fafafa;
+      word-break: break-word;
+      transition: background 0.15s, border-color 0.15s;
+      flex-wrap: wrap;
+    }
+
+    .todo-item.is-overdue {
+      border-color: #d70015;
+      background: #fff5f5;
+    }
+
+    .todo-item.is-overdue.is-done {
+      border-color: #e5e5e7;
+      background: #fafafa;
+    }
+
+    .todo-checkbox {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #0071e3;
+    }
+
+    .todo-text {
+      flex: 1;
+      transition: color 0.15s, text-decoration-color 0.15s;
+      cursor: text;
+    }
+
+    .todo-item.is-done .todo-text {
+      text-decoration: line-through;
+      color: #86868b;
+    }
+
+    .todo-edit-input {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #0071e3;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .todo-due {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .todo-due-display,
+    .todo-due-add {
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      color: #515154;
+      background: #f0f0f3;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .todo-due-display:hover {
+      background: #e5e5ea;
+    }
+
+    .todo-due-add {
+      color: #0071e3;
+      background: transparent;
+      border-color: #d2d2d7;
+    }
+
+    .todo-due-add:hover {
+      background: #f0f7ff;
+      border-color: #0071e3;
+    }
+
+    .todo-item.is-overdue:not(.is-done) .todo-due-display {
+      background: #ffe5e5;
+      color: #d70015;
+      font-weight: 600;
+    }
+
+    .todo-item.is-overdue:not(.is-done) .todo-due-display::after {
+      content: " ⚠ Lejárt";
+    }
+
+    .todo-due-clear {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      font-size: 0.95rem;
+      line-height: 1;
+      color: #86868b;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .todo-due-clear:hover {
+      background: #ffe5e5;
+      color: #d70015;
+    }
+
+    .todo-due-edit-input {
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: #1d1d1f;
+      background: #fff;
+      border: 1px solid #0071e3;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .todo-due-display:focus-visible,
+    .todo-due-add:focus-visible,
+    .todo-due-clear:focus-visible,
+    .todo-due-edit-input:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-delete-btn {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 1.25rem;
+      line-height: 1;
+      color: #86868b;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .todo-delete-btn:hover {
+      background: #ffe5e5;
+      color: #d70015;
+    }
+
+    .todo-delete-btn:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-attach-btn {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 1rem;
+      line-height: 1;
+      color: #515154;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .todo-attach-btn:hover {
+      background: #f0f7ff;
+      color: #0071e3;
+    }
+
+    .todo-attach-btn:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-attachments {
+      list-style: none;
+      flex-basis: 100%;
+      margin: 4px 0 0 30px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .todo-attachment {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      background: #fff;
+      border: 1px solid #e5e5e7;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .todo-attachment-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 2px 4px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: #0071e3;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .todo-attachment-name:hover {
+      color: #0062c4;
+    }
+
+    .todo-attachment-name:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-attachment-name.is-image::before {
+      content: "🖼️ ";
+    }
+
+    .todo-attachment-name.is-file::before {
+      content: "📄 ";
+    }
+
+    .todo-attachment-size {
+      flex-shrink: 0;
+      color: #86868b;
+      font-size: 0.8rem;
+    }
+
+    .todo-attachment-remove {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      font-size: 0.95rem;
+      line-height: 1;
+      color: #86868b;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .todo-attachment-remove:hover {
+      background: #ffe5e5;
+      color: #d70015;
+    }
+
+    .todo-attachment-remove:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-attachment-preview {
+      flex-basis: 100%;
+      max-width: 240px;
+      max-height: 160px;
+      margin-top: 4px;
+      border: 1px solid #d2d2d7;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .todo-error {
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: #ffe5e5;
+      color: #d70015;
+      border: 1px solid #ffb3b3;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .todo-error[hidden] {
+      display: none;
+    }
+
+    .todo-file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .todo-input:focus-visible,
+    .todo-add-btn:focus-visible,
+    .todo-checkbox:focus-visible,
+    .todo-edit-input:focus-visible {
+      outline: 2px solid #0071e3;
+      outline-offset: 2px;
+    }
+
+    .todo-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e5e7;
+      font-size: 0.9rem;
+      color: #515154;
+    }
+
+    .todo-status-count {
+      font-weight: 500;
+      color: #1d1d1f;
+    }
+
+    .todo-status-total {
+      color: #86868b;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+      }
+
+      .todo-form {
+        flex-direction: column;
+      }
+
+      .todo-input,
+      .todo-due-input,
+      .todo-add-btn {
+        width: 100%;
+      }
+
+      .todo-filters {
+        flex-wrap: wrap;
+      }
+
+      .todo-item {
+        flex-wrap: wrap;
+      }
+
+      .todo-due {
+        order: 3;
+        flex-basis: 100%;
+        margin-left: 30px;
+      }
+
+      .todo-attachments {
+        margin-left: 30px;
+      }
+
+      .todo-attachment-preview {
+        max-width: 100%;
+      }
+
+      .todo-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .todo-cal-grid {
+        grid-template-columns: repeat(7, minmax(48px, 1fr));
+        gap: 2px;
+        min-width: 360px;
+      }
+
+      .todo-cal-day {
+        min-height: 64px;
+        padding: 4px;
+        gap: 2px;
+      }
+
+      .todo-cal-day-num {
+        font-size: 0.8rem;
+      }
+
+      .todo-cal-todo {
+        font-size: 0.7rem;
+        padding: 1px 4px;
+      }
+
+      .todo-cal-header {
+        font-size: 0.75rem;
+        padding: 4px 0;
+      }
+
+      .todo-cal-title {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Todo Lista</h1>
+
+    <div class="todo-error" id="todo-error" role="alert" aria-live="assertive" hidden></div>
+
+    <input
+      type="file"
+      class="todo-file-input"
+      id="todo-file-input"
+      accept="image/*,.pdf,.txt,.doc"
+      multiple
+      aria-hidden="true"
+      tabindex="-1"
+    >
+
+    <form class="todo-form" id="todo-form" aria-label="Új todo hozzáadása">
+      <input
+        type="text"
+        class="todo-input"
+        id="todo-input"
+        name="todo-text"
+        placeholder="Mit kell elvégezni?"
+        aria-label="Todo szövege"
+        autocomplete="off"
+        required
+      >
+      <input
+        type="datetime-local"
+        class="todo-due-input"
+        id="todo-due-input"
+        name="todo-due"
+        aria-label="Határidő (opcionális)"
+      >
+      <button type="submit" class="todo-add-btn">Hozzáadás</button>
+    </form>
+
+    <div class="todo-view-toggle" id="todo-view-toggle" role="group" aria-label="Nézet">
+      <button type="button" class="todo-view-btn" data-view="list" aria-pressed="true">Lista</button>
+      <button type="button" class="todo-view-btn" data-view="calendar" aria-pressed="false">Naptár</button>
+    </div>
+
+    <div id="todo-list-view">
+      <div class="todo-search" id="todo-search">
+        <input
+          type="search"
+          class="todo-search-input"
+          id="todo-search-input"
+          placeholder="Keresés..."
+          aria-label="Keresés a todók között"
+          autocomplete="off"
+        >
+        <button
+          type="button"
+          class="todo-search-clear"
+          id="todo-search-clear"
+          aria-label="Keresés törlése"
+          hidden
+        >×</button>
+      </div>
+
+      <nav class="todo-filters" id="todo-filters" aria-label="Szűrés állapot szerint">
+        <a href="#/all" class="todo-filter" data-filter="all">Összes</a>
+        <a href="#/active" class="todo-filter" data-filter="active">Aktív</a>
+        <a href="#/completed" class="todo-filter" data-filter="completed">Kész</a>
+      </nav>
+
+      <div class="todo-sort" id="todo-sort" role="group" aria-label="Rendezés">
+        <span class="todo-sort-label">Rendezés:</span>
+        <button type="button" class="todo-sort-btn" data-sort="dueDate" aria-pressed="true">Határidő</button>
+        <button type="button" class="todo-sort-btn" data-sort="createdAt" aria-pressed="false">Létrehozás dátuma</button>
+      </div>
+
+      <div class="todo-day-filter" id="todo-day-filter" hidden>
+        <span id="todo-day-filter-text"></span>
+        <button type="button" class="todo-day-filter-clear" aria-label="Napi szűrő törlése">×</button>
+      </div>
+
+      <ul class="todo-list" id="todo-list" aria-label="Todo lista"></ul>
+
+      <footer class="todo-status" id="todo-status" aria-live="polite" aria-atomic="true">
+        <span class="todo-status-count" id="todo-status-count">0 aktív feladat</span>
+        <span class="todo-status-total" id="todo-status-total"></span>
+      </footer>
+    </div>
+
+    <div id="todo-calendar-view" hidden>
+      <div class="todo-cal-nav">
+        <button type="button" class="todo-cal-nav-btn" id="todo-cal-prev" aria-label="Előző hónap">‹</button>
+        <h2 class="todo-cal-title" id="todo-cal-title" aria-live="polite"></h2>
+        <button type="button" class="todo-cal-nav-btn" id="todo-cal-next" aria-label="Következő hónap">›</button>
+      </div>
+      <div class="todo-cal-grid-wrap">
+        <div class="todo-cal-grid" id="todo-cal-grid" role="grid" aria-label="Naptár"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_KEY = 'advc-todos';
+      const SORT_STORAGE_KEY = 'advc-sort';
+      const VIEW_STORAGE_KEY = 'advc-view';
+      const VALID_FILTERS = ['all', 'active', 'completed'];
+      const VALID_SORTS = ['dueDate', 'createdAt'];
+      const VALID_VIEWS = ['list', 'calendar'];
+      const DEFAULT_SORT = 'dueDate';
+      const DEFAULT_VIEW = 'list';
+      const OVERDUE_TICK_MS = 30000;
+      const WEEKDAY_HEADERS = ['H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V'];
+      const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+      const ERROR_AUTO_HIDE_MS = 6000;
+      const form = document.getElementById('todo-form');
+      const input = document.getElementById('todo-input');
+      const dueInput = document.getElementById('todo-due-input');
+      const list = document.getElementById('todo-list');
+      const filtersNav = document.getElementById('todo-filters');
+      const sortNav = document.getElementById('todo-sort');
+      const statusCount = document.getElementById('todo-status-count');
+      const statusTotal = document.getElementById('todo-status-total');
+      const viewToggle = document.getElementById('todo-view-toggle');
+      const listView = document.getElementById('todo-list-view');
+      const calendarView = document.getElementById('todo-calendar-view');
+      const dayFilterEl = document.getElementById('todo-day-filter');
+      const dayFilterText = document.getElementById('todo-day-filter-text');
+      const calPrevBtn = document.getElementById('todo-cal-prev');
+      const calNextBtn = document.getElementById('todo-cal-next');
+      const calTitle = document.getElementById('todo-cal-title');
+      const calGrid = document.getElementById('todo-cal-grid');
+      const searchInput = document.getElementById('todo-search-input');
+      const searchClearBtn = document.getElementById('todo-search-clear');
+      const fileInput = document.getElementById('todo-file-input');
+      const errorBanner = document.getElementById('todo-error');
+
+      const monthYearFormatter = new Intl.DateTimeFormat('hu-HU', {
+        year: 'numeric',
+        month: 'long'
+      });
+      const dayLabelFormatter = new Intl.DateTimeFormat('hu-HU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const dueDisplayFormatter = new Intl.DateTimeFormat('hu-HU', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      let todos = loadTodos();
+      let currentFilter = readFilterFromHash();
+      let currentSort = loadSort();
+      let currentView = loadView();
+      let currentDayFilter = null;
+      let currentSearchQuery = '';
+      let pendingAttachTodoId = null;
+      let errorTimeoutId = null;
+      const expandedAttachments = new Set();
+      let calendarMonth = (function () {
+        const now = new Date();
+        return { year: now.getFullYear(), month: now.getMonth() };
+      })();
+      render();
+      setInterval(updateOverdueState, OVERDUE_TICK_MS);
+
+      window.addEventListener('hashchange', function () {
+        currentFilter = readFilterFromHash();
+        currentDayFilter = null;
+        render();
+      });
+
+      viewToggle.addEventListener('click', function (event) {
+        const btn = event.target.closest('.todo-view-btn');
+        if (!btn || !viewToggle.contains(btn)) return;
+        const newView = btn.dataset.view;
+        if (VALID_VIEWS.indexOf(newView) < 0 || newView === currentView) return;
+        currentView = newView;
+        currentDayFilter = null;
+        saveView();
+        render();
+      });
+
+      calPrevBtn.addEventListener('click', function () {
+        calendarMonth.month -= 1;
+        if (calendarMonth.month < 0) {
+          calendarMonth.month = 11;
+          calendarMonth.year -= 1;
+        }
+        renderCalendar();
+      });
+
+      calNextBtn.addEventListener('click', function () {
+        calendarMonth.month += 1;
+        if (calendarMonth.month > 11) {
+          calendarMonth.month = 0;
+          calendarMonth.year += 1;
+        }
+        renderCalendar();
+      });
+
+      calGrid.addEventListener('click', function (event) {
+        const cell = event.target.closest('.todo-cal-day');
+        if (!cell || !calGrid.contains(cell)) return;
+        const dateKey = cell.dataset.date;
+        if (!dateKey) return;
+        currentDayFilter = dateKey;
+        currentView = 'list';
+        saveView();
+        render();
+      });
+
+      dayFilterEl.addEventListener('click', function (event) {
+        if (!event.target.classList.contains('todo-day-filter-clear')) return;
+        currentDayFilter = null;
+        render();
+      });
+
+      searchInput.addEventListener('input', function () {
+        currentSearchQuery = searchInput.value;
+        searchClearBtn.hidden = currentSearchQuery.length === 0;
+        render();
+      });
+
+      searchClearBtn.addEventListener('click', function () {
+        if (currentSearchQuery === '' && searchInput.value === '') return;
+        currentSearchQuery = '';
+        searchInput.value = '';
+        searchClearBtn.hidden = true;
+        searchInput.focus();
+        render();
+      });
+
+      sortNav.addEventListener('click', function (event) {
+        const btn = event.target.closest('.todo-sort-btn');
+        if (!btn || !sortNav.contains(btn)) return;
+        const newSort = btn.dataset.sort;
+        if (VALID_SORTS.indexOf(newSort) < 0 || newSort === currentSort) return;
+        currentSort = newSort;
+        saveSort();
+        render();
+      });
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        const dueDate = parseDueInput(dueInput.value);
+        addTodo(text, dueDate);
+        input.value = '';
+        dueInput.value = '';
+        input.focus();
+      });
+
+      list.addEventListener('click', function (event) {
+        const target = event.target;
+        const li = target.closest('.todo-item');
+        if (!li) return;
+        const id = li.dataset.id;
+        if (target.classList.contains('todo-checkbox')) {
+          toggleTodo(id);
+        } else if (target.classList.contains('todo-delete-btn')) {
+          deleteTodo(id);
+        } else if (target.classList.contains('todo-due-clear')) {
+          clearDueDate(id);
+        } else if (target.classList.contains('todo-due-display') ||
+                   target.classList.contains('todo-due-add')) {
+          startEditDueDate(id, target.closest('.todo-due'));
+        } else if (target.classList.contains('todo-attach-btn')) {
+          triggerFilePicker(id);
+        } else if (target.classList.contains('todo-attachment-remove')) {
+          const attLi = target.closest('.todo-attachment');
+          if (attLi) removeAttachment(id, attLi.dataset.attachId);
+        } else if (target.classList.contains('todo-attachment-name')) {
+          const attLi = target.closest('.todo-attachment');
+          if (attLi) handleAttachmentOpen(id, attLi.dataset.attachId);
+        }
+      });
+
+      fileInput.addEventListener('change', function () {
+        const todoId = pendingAttachTodoId;
+        pendingAttachTodoId = null;
+        const files = Array.from(fileInput.files || []);
+        fileInput.value = '';
+        if (!todoId || files.length === 0) return;
+        attachFilesToTodo(todoId, files);
+      });
+
+      errorBanner.addEventListener('click', hideError);
+
+      list.addEventListener('dblclick', function (event) {
+        const target = event.target;
+        if (!target.classList.contains('todo-text')) return;
+        const li = target.closest('.todo-item');
+        if (!li) return;
+        startEdit(li.dataset.id, target);
+      });
+
+      function addTodo(text, dueDate) {
+        todos.push({
+          id: generateId(),
+          text: text,
+          done: false,
+          createdAt: Date.now(),
+          dueDate: dueDate || null
+        });
+        saveTodos();
+        render();
+      }
+
+      function toggleTodo(id) {
+        const todo = todos.find(function (t) { return t.id === id; });
+        if (!todo) return;
+        todo.done = !todo.done;
+        saveTodos();
+        render();
+      }
+
+      function deleteTodo(id) {
+        todos = todos.filter(function (t) { return t.id !== id; });
+        saveTodos();
+        render();
+      }
+
+      function clearDueDate(id) {
+        const todo = todos.find(function (t) { return t.id === id; });
+        if (!todo || !todo.dueDate) return;
+        todo.dueDate = null;
+        saveTodos();
+        render();
+      }
+
+      function triggerFilePicker(todoId) {
+        pendingAttachTodoId = todoId;
+        fileInput.value = '';
+        fileInput.click();
+      }
+
+      function readFileAsDataURL(file) {
+        return new Promise(function (resolve, reject) {
+          const reader = new FileReader();
+          reader.onload = function () { resolve(reader.result); };
+          reader.onerror = function () { reject(reader.error || new Error('FileReader hiba')); };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function attachFilesToTodo(todoId, files) {
+        const todo = todos.find(function (t) { return t.id === todoId; });
+        if (!todo) return;
+        if (!Array.isArray(todo.attachments)) todo.attachments = [];
+
+        const oversized = [];
+        const tasks = [];
+        for (const file of files) {
+          if (file.size > MAX_ATTACHMENT_BYTES) {
+            oversized.push(file.name);
+            continue;
+          }
+          tasks.push(
+            readFileAsDataURL(file).then(function (dataUrl) {
+              return {
+                id: generateId(),
+                name: file.name,
+                size: file.size,
+                type: file.type || '',
+                dataUrl: dataUrl
+              };
+            }).catch(function () {
+              showError('Nem sikerült olvasni: ' + file.name);
+              return null;
+            })
+          );
+        }
+
+        Promise.all(tasks).then(function (results) {
+          const added = results.filter(function (a) { return !!a; });
+          for (const att of added) todo.attachments.push(att);
+
+          if (added.length > 0 && !saveTodos()) {
+            const ids = new Set(added.map(function (a) { return a.id; }));
+            todo.attachments = todo.attachments.filter(function (a) { return !ids.has(a.id); });
+            showError('A localStorage megtelt. A csatolmány nem mentődött el. Törölj néhány csatolmányt vagy todót!');
+          }
+
+          if (oversized.length > 0) {
+            showError(oversized.join(', ') + ' túl nagy (max 2 MB / fájl).');
+          }
+          render();
+        });
+      }
+
+      function removeAttachment(todoId, attachId) {
+        const todo = todos.find(function (t) { return t.id === todoId; });
+        if (!todo || !Array.isArray(todo.attachments)) return;
+        const before = todo.attachments.length;
+        todo.attachments = todo.attachments.filter(function (a) { return a.id !== attachId; });
+        if (todo.attachments.length === before) return;
+        expandedAttachments.delete(attachId);
+        saveTodos();
+        render();
+      }
+
+      function handleAttachmentOpen(todoId, attachId) {
+        const todo = todos.find(function (t) { return t.id === todoId; });
+        if (!todo || !Array.isArray(todo.attachments)) return;
+        const att = todo.attachments.find(function (a) { return a.id === attachId; });
+        if (!att) return;
+        if (isImageAttachment(att)) {
+          if (expandedAttachments.has(attachId)) expandedAttachments.delete(attachId);
+          else expandedAttachments.add(attachId);
+          render();
+        } else {
+          triggerDownload(att.name, att.dataUrl);
+        }
+      }
+
+      function isImageAttachment(att) {
+        return !!(att && typeof att.type === 'string' && att.type.indexOf('image/') === 0);
+      }
+
+      function triggerDownload(name, dataUrl) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = name || 'csatolmany';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      function formatFileSize(bytes) {
+        if (typeof bytes !== 'number' || !isFinite(bytes) || bytes < 0) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.hidden = false;
+        if (errorTimeoutId) clearTimeout(errorTimeoutId);
+        errorTimeoutId = setTimeout(hideError, ERROR_AUTO_HIDE_MS);
+      }
+
+      function hideError() {
+        if (errorTimeoutId) {
+          clearTimeout(errorTimeoutId);
+          errorTimeoutId = null;
+        }
+        errorBanner.hidden = true;
+        errorBanner.textContent = '';
+      }
+
+      function startEditDueDate(id, dueWrapper) {
+        const todo = todos.find(function (t) { return t.id === id; });
+        if (!todo || !dueWrapper) return;
+
+        const editInput = document.createElement('input');
+        editInput.type = 'datetime-local';
+        editInput.className = 'todo-due-edit-input';
+        editInput.setAttribute('aria-label', 'Határidő szerkesztése');
+        if (todo.dueDate) {
+          editInput.value = formatForDateTimeLocal(todo.dueDate);
+        }
+
+        let finished = false;
+
+        function commit() {
+          if (finished) return;
+          finished = true;
+          const newDue = parseDueInput(editInput.value);
+          const currentDue = todo.dueDate || null;
+          if (newDue !== currentDue) {
+            todo.dueDate = newDue;
+            saveTodos();
+          }
+          render();
+        }
+
+        function cancel() {
+          if (finished) return;
+          finished = true;
+          render();
+        }
+
+        editInput.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            commit();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            cancel();
+          }
+        });
+        editInput.addEventListener('change', commit);
+        editInput.addEventListener('blur', commit);
+
+        dueWrapper.replaceWith(editInput);
+        editInput.focus();
+        if (typeof editInput.showPicker === 'function') {
+          try { editInput.showPicker(); } catch (e) { /* ignore */ }
+        }
+      }
+
+      function startEdit(id, textSpan) {
+        const todo = todos.find(function (t) { return t.id === id; });
+        if (!todo) return;
+
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.className = 'todo-edit-input';
+        editInput.value = todo.text;
+        editInput.setAttribute('aria-label', 'Todo szerkesztése');
+
+        let finished = false;
+
+        function commit() {
+          if (finished) return;
+          finished = true;
+          const newText = editInput.value.trim();
+          if (newText && newText !== todo.text) {
+            todo.text = newText;
+            saveTodos();
+          }
+          render();
+        }
+
+        function cancel() {
+          if (finished) return;
+          finished = true;
+          render();
+        }
+
+        editInput.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            commit();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            cancel();
+          }
+        });
+
+        editInput.addEventListener('blur', commit);
+
+        textSpan.replaceWith(editInput);
+        editInput.focus();
+        editInput.select();
+      }
+
+      function generateId() {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return crypto.randomUUID();
+        }
+        return String(Date.now()) + '-' + Math.random().toString(36).slice(2, 10);
+      }
+
+      function parseDueInput(value) {
+        if (!value) return null;
+        const ms = new Date(value).getTime();
+        return isNaN(ms) ? null : ms;
+      }
+
+      function formatForDateTimeLocal(ms) {
+        const d = new Date(ms);
+        if (isNaN(d.getTime())) return '';
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+          + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      }
+
+      function formatForDisplay(ms) {
+        const d = new Date(ms);
+        if (isNaN(d.getTime())) return '';
+        return dueDisplayFormatter.format(d);
+      }
+
+      function isOverdue(todo, now) {
+        return !!(todo.dueDate && !todo.done && todo.dueDate < now);
+      }
+
+      function loadTodos() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+          return [];
+        }
+      }
+
+      function saveTodos() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function readFilterFromHash() {
+        const hash = (window.location.hash || '').replace(/^#\//, '');
+        return VALID_FILTERS.indexOf(hash) >= 0 ? hash : 'all';
+      }
+
+      function loadSort() {
+        try {
+          const stored = localStorage.getItem(SORT_STORAGE_KEY);
+          return VALID_SORTS.indexOf(stored) >= 0 ? stored : DEFAULT_SORT;
+        } catch (err) {
+          return DEFAULT_SORT;
+        }
+      }
+
+      function saveSort() {
+        try {
+          localStorage.setItem(SORT_STORAGE_KEY, currentSort);
+        } catch (err) {
+          /* ignore */
+        }
+      }
+
+      function loadView() {
+        try {
+          const stored = localStorage.getItem(VIEW_STORAGE_KEY);
+          return VALID_VIEWS.indexOf(stored) >= 0 ? stored : DEFAULT_VIEW;
+        } catch (err) {
+          return DEFAULT_VIEW;
+        }
+      }
+
+      function saveView() {
+        try {
+          localStorage.setItem(VIEW_STORAGE_KEY, currentView);
+        } catch (err) {
+          /* ignore */
+        }
+      }
+
+      function pad2(n) {
+        return String(n).padStart(2, '0');
+      }
+
+      function dateKeyFor(year, month, day) {
+        return year + '-' + pad2(month + 1) + '-' + pad2(day);
+      }
+
+      function todoDateKey(ms) {
+        const d = new Date(ms);
+        return dateKeyFor(d.getFullYear(), d.getMonth(), d.getDate());
+      }
+
+      function formatDayLabel(key) {
+        const parts = key.split('-');
+        const y = Number(parts[0]);
+        const m = Number(parts[1]);
+        const d = Number(parts[2]);
+        return dayLabelFormatter.format(new Date(y, m - 1, d));
+      }
+
+      function sortTodos(items) {
+        const sorted = items.slice();
+        sorted.sort(function (a, b) {
+          if (a.done !== b.done) return a.done ? 1 : -1;
+          if (currentSort === 'dueDate') {
+            const aDue = a.dueDate || null;
+            const bDue = b.dueDate || null;
+            if (aDue === null && bDue === null) {
+              return (a.createdAt || 0) - (b.createdAt || 0);
+            }
+            if (aDue === null) return 1;
+            if (bDue === null) return -1;
+            if (aDue !== bDue) return aDue - bDue;
+            return (a.createdAt || 0) - (b.createdAt || 0);
+          }
+          return (a.createdAt || 0) - (b.createdAt || 0);
+        });
+        return sorted;
+      }
+
+      function filterTodos(items) {
+        let result = items;
+        if (currentDayFilter) {
+          result = result.filter(function (t) {
+            return t.dueDate && todoDateKey(t.dueDate) === currentDayFilter;
+          });
+        }
+        const query = currentSearchQuery.trim().toLowerCase();
+        if (query) {
+          result = result.filter(function (t) {
+            return (t.text || '').toLowerCase().indexOf(query) !== -1;
+          });
+        }
+        if (currentFilter === 'active') {
+          return result.filter(function (t) { return !t.done; });
+        }
+        if (currentFilter === 'completed') {
+          return result.filter(function (t) { return !!t.done; });
+        }
+        return result;
+      }
+
+      function renderFilters() {
+        const links = filtersNav.querySelectorAll('.todo-filter');
+        for (const link of links) {
+          if (link.dataset.filter === currentFilter) {
+            link.classList.add('is-active');
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.classList.remove('is-active');
+            link.removeAttribute('aria-current');
+          }
+        }
+      }
+
+      function renderSort() {
+        const buttons = sortNav.querySelectorAll('.todo-sort-btn');
+        for (const btn of buttons) {
+          const active = btn.dataset.sort === currentSort;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+      }
+
+      function renderStatus() {
+        const total = todos.length;
+        const active = todos.reduce(function (n, t) { return n + (t.done ? 0 : 1); }, 0);
+        statusCount.textContent = active === 0
+          ? 'Nincs aktív feladat'
+          : active + ' aktív feladat';
+        statusTotal.textContent = total === 0
+          ? ''
+          : 'Összesen: ' + total;
+      }
+
+      function renderViewToggle() {
+        const buttons = viewToggle.querySelectorAll('.todo-view-btn');
+        for (const btn of buttons) {
+          const active = btn.dataset.view === currentView;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+      }
+
+      function renderDayFilter() {
+        if (currentDayFilter) {
+          dayFilterEl.hidden = false;
+          dayFilterText.textContent = '📅 ' + formatDayLabel(currentDayFilter);
+        } else {
+          dayFilterEl.hidden = true;
+          dayFilterText.textContent = '';
+        }
+      }
+
+      function renderCalendar() {
+        calTitle.textContent = monthYearFormatter.format(
+          new Date(calendarMonth.year, calendarMonth.month, 1)
+        );
+
+        calGrid.innerHTML = '';
+
+        for (const label of WEEKDAY_HEADERS) {
+          const header = document.createElement('div');
+          header.className = 'todo-cal-header';
+          header.setAttribute('role', 'columnheader');
+          header.textContent = label;
+          calGrid.appendChild(header);
+        }
+
+        const todosByDate = {};
+        for (const t of todos) {
+          if (!t.dueDate) continue;
+          const key = todoDateKey(t.dueDate);
+          if (!todosByDate[key]) todosByDate[key] = [];
+          todosByDate[key].push(t);
+        }
+
+        const firstOfMonth = new Date(calendarMonth.year, calendarMonth.month, 1);
+        const firstDow = (firstOfMonth.getDay() + 6) % 7;
+        const todayKey = todoDateKey(Date.now());
+        const now = Date.now();
+        const totalCells = 42;
+
+        for (let i = 0; i < totalCells; i++) {
+          const offset = i - firstDow;
+          const cellDate = new Date(calendarMonth.year, calendarMonth.month, 1 + offset);
+          const cellYear = cellDate.getFullYear();
+          const cellMonth = cellDate.getMonth();
+          const cellDay = cellDate.getDate();
+          const key = dateKeyFor(cellYear, cellMonth, cellDay);
+          const inMonth = cellMonth === calendarMonth.month;
+          const isToday = key === todayKey;
+          const dayTodos = todosByDate[key] || [];
+
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'todo-cal-day';
+          if (!inMonth) cell.classList.add('is-other-month');
+          if (isToday) cell.classList.add('is-today');
+          cell.dataset.date = key;
+          cell.setAttribute('role', 'gridcell');
+          const ariaParts = [formatDayLabel(key)];
+          if (isToday) ariaParts.push('ma');
+          if (dayTodos.length > 0) {
+            ariaParts.push(dayTodos.length + (dayTodos.length === 1 ? ' todó' : ' todó'));
+          }
+          cell.setAttribute('aria-label', ariaParts.join(', '));
+
+          const dayNum = document.createElement('span');
+          dayNum.className = 'todo-cal-day-num';
+          dayNum.textContent = cellDay;
+          cell.appendChild(dayNum);
+
+          if (dayTodos.length > 0) {
+            const wrap = document.createElement('div');
+            wrap.className = 'todo-cal-day-todos';
+            const visible = dayTodos.slice(0, 3);
+            for (const t of visible) {
+              const item = document.createElement('span');
+              item.className = 'todo-cal-todo';
+              if (t.done) item.classList.add('is-done');
+              else if (isOverdue(t, now)) item.classList.add('is-overdue');
+              item.textContent = t.text;
+              wrap.appendChild(item);
+            }
+            if (dayTodos.length > 3) {
+              const more = document.createElement('span');
+              more.className = 'todo-cal-more';
+              more.textContent = '+' + (dayTodos.length - 3) + ' további';
+              wrap.appendChild(more);
+            }
+            cell.appendChild(wrap);
+          }
+
+          calGrid.appendChild(cell);
+        }
+      }
+
+      function render() {
+        renderViewToggle();
+        if (currentView === 'calendar') {
+          listView.hidden = true;
+          calendarView.hidden = false;
+          renderCalendar();
+          return;
+        }
+        listView.hidden = false;
+        calendarView.hidden = true;
+        renderFilters();
+        renderSort();
+        renderDayFilter();
+        renderStatus();
+        if (currentSearchQuery.trim()) {
+          list.dataset.empty = 'search';
+        } else {
+          delete list.dataset.empty;
+        }
+        list.innerHTML = '';
+        const now = Date.now();
+        for (const todo of sortTodos(filterTodos(todos))) {
+          const li = document.createElement('li');
+          let className = 'todo-item';
+          if (todo.done) className += ' is-done';
+          if (isOverdue(todo, now)) className += ' is-overdue';
+          li.className = className;
+          li.dataset.id = todo.id;
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'todo-checkbox';
+          checkbox.checked = !!todo.done;
+          checkbox.setAttribute('aria-label', 'Kész: ' + todo.text);
+
+          const textSpan = document.createElement('span');
+          textSpan.className = 'todo-text';
+          textSpan.textContent = todo.text;
+
+          const dueWrapper = document.createElement('div');
+          dueWrapper.className = 'todo-due';
+
+          if (todo.dueDate) {
+            const displayBtn = document.createElement('button');
+            displayBtn.type = 'button';
+            displayBtn.className = 'todo-due-display';
+            displayBtn.textContent = formatForDisplay(todo.dueDate);
+            const overdue = isOverdue(todo, now);
+            displayBtn.setAttribute(
+              'aria-label',
+              (overdue ? 'Lejárt határidő: ' : 'Határidő: ')
+              + formatForDisplay(todo.dueDate)
+              + ' (módosítás)'
+            );
+
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'todo-due-clear';
+            clearBtn.setAttribute('aria-label', 'Határidő törlése');
+            clearBtn.textContent = '×';
+
+            dueWrapper.appendChild(displayBtn);
+            dueWrapper.appendChild(clearBtn);
+          } else {
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'todo-due-add';
+            addBtn.setAttribute('aria-label', 'Határidő hozzáadása');
+            addBtn.textContent = '📅 Határidő';
+            dueWrapper.appendChild(addBtn);
+          }
+
+          const attachBtn = document.createElement('button');
+          attachBtn.type = 'button';
+          attachBtn.className = 'todo-attach-btn';
+          attachBtn.setAttribute('aria-label', 'Fájl csatolása: ' + todo.text);
+          attachBtn.title = 'Fájl csatolása';
+          attachBtn.textContent = '📎';
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'todo-delete-btn';
+          deleteBtn.setAttribute('aria-label', 'Törlés: ' + todo.text);
+          deleteBtn.textContent = '×';
+
+          li.appendChild(checkbox);
+          li.appendChild(textSpan);
+          li.appendChild(dueWrapper);
+          li.appendChild(attachBtn);
+          li.appendChild(deleteBtn);
+
+          const attachments = Array.isArray(todo.attachments) ? todo.attachments : [];
+          if (attachments.length > 0) {
+            const attUl = document.createElement('ul');
+            attUl.className = 'todo-attachments';
+            attUl.setAttribute('aria-label', 'Csatolmányok');
+            for (const att of attachments) {
+              const attLi = document.createElement('li');
+              attLi.className = 'todo-attachment';
+              attLi.dataset.attachId = att.id;
+
+              const isImage = isImageAttachment(att);
+
+              const nameBtn = document.createElement('button');
+              nameBtn.type = 'button';
+              nameBtn.className = 'todo-attachment-name ' + (isImage ? 'is-image' : 'is-file');
+              nameBtn.textContent = att.name;
+              nameBtn.setAttribute(
+                'aria-label',
+                (isImage ? 'Előnézet: ' : 'Letöltés: ') + att.name
+              );
+
+              const sizeSpan = document.createElement('span');
+              sizeSpan.className = 'todo-attachment-size';
+              sizeSpan.textContent = formatFileSize(att.size);
+
+              const removeBtn = document.createElement('button');
+              removeBtn.type = 'button';
+              removeBtn.className = 'todo-attachment-remove';
+              removeBtn.setAttribute('aria-label', 'Csatolmány törlése: ' + att.name);
+              removeBtn.textContent = '×';
+
+              attLi.appendChild(nameBtn);
+              attLi.appendChild(sizeSpan);
+              attLi.appendChild(removeBtn);
+
+              if (isImage && expandedAttachments.has(att.id)) {
+                const img = document.createElement('img');
+                img.className = 'todo-attachment-preview';
+                img.src = att.dataUrl;
+                img.alt = att.name;
+                attLi.appendChild(img);
+              }
+
+              attUl.appendChild(attLi);
+            }
+            li.appendChild(attUl);
+          }
+
+          list.appendChild(li);
+        }
+      }
+
+      function updateOverdueState() {
+        const now = Date.now();
+        const items = list.querySelectorAll('.todo-item');
+        for (const li of items) {
+          const id = li.dataset.id;
+          const todo = todos.find(function (t) { return t.id === id; });
+          if (!todo) continue;
+          li.classList.toggle('is-overdue', isOverdue(todo, now));
+          if (todo.dueDate) {
+            const display = li.querySelector('.todo-due-display');
+            if (display) {
+              const overdue = isOverdue(todo, now);
+              display.setAttribute(
+                'aria-label',
+                (overdue ? 'Lejárt határidő: ' : 'Határidő: ')
+                + formatForDisplay(todo.dueDate)
+                + ' (módosítás)'
+              );
+            }
+          }
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
